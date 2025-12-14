@@ -32,10 +32,10 @@
         // --- 1. CONFIGURATION SECTION ---
         const firebaseConfig = {
             apiKey: "AIzaSyB8TYJaMth1Hu2yjlKH7FFowRBmym8z2d8",
-            authDomain: "chore-chart-5ac5a.firebaseapp.com",
-            databaseURL: "https://chore-chart-5ac5a-default-rtdb.firebaseio.com",
-            projectId: "chore-chart-5ac5a",
-            storageBucket: "chore-chart-5ac5a.firebasestorage.app",
+            authDomain: "conwaydb.firebaseapp.com",
+            databaseURL: "https://conwaydb.firebaseio.com",
+            projectId: "conwaydb",
+            storageBucket: "conwaydb.firebasestorage.app",
             messagingSenderId: "974196273728",
             appId: "1:974196273728:web:55af398f6510fefe7c25a5",
             measurementId: "G-B9JBM814KK"
@@ -133,6 +133,7 @@
                 };
 
                 const unsubscribeChores = db.collection('chores')
+                    // .where('userId', '==', currentUid) // Temporarily removed for easier public testing
                     .onSnapshot(snapshot => {
                         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -499,7 +500,20 @@
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end gap-3 mt-6">
+                                <div className="flex flex-col gap-2 mt-6">
+                                    <button 
+                                        onClick={async () => {
+                                            if(window.indexedDB) {
+                                                const dbs = await window.indexedDB.databases();
+                                                dbs.forEach(db => window.indexedDB.deleteDatabase(db.name));
+                                            }
+                                            localStorage.clear();
+                                            window.location.reload();
+                                        }}
+                                        className="px-6 py-2 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200"
+                                    >
+                                        Clear App Cache & Restart
+                                    </button>
                                     <button 
                                         onClick={() => window.location.reload()}
                                         className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700"
