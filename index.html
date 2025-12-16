@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Earning Engine</title>
     
-    <!-- Tailwind CSS for styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- React and ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- Babel for translating JSX -->
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -26,6 +26,8 @@
     <style>
         body { background-color: #f8fafc; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        /* Smooth interactions */
+        .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body>
@@ -33,6 +35,7 @@
 
     <script type="text/babel">
         // --- 1. CONFIGURATION SECTION ---
+        // NOTE: In a production environment, strict rules should be applied to Firestore.
         const firebaseConfig = {
             apiKey: "AIzaSyCtlvqBIZ5A7qyKlXg7aQBm4t2BwfdcfUU",
             authDomain: "kids-chore-chart-33a6d.firebaseapp.com",
@@ -59,7 +62,6 @@
         }
 
         // --- 2. SOUND EFFECTS (Web Audio API) ---
-        // Generates a "Coin/Success" sound without external files
         const playSuccessSound = () => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -106,7 +108,8 @@
                 save: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
                 x: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
                 lock: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
-                db: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                db: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>,
+                history: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             };
             return icons[name] || null;
         };
@@ -120,6 +123,9 @@
         ];
 
         function App() {
+            // !!! UPDATE THIS URL to point to your GitHub raw image !!!
+            const LOGO_URL = "https://placehold.co/100x100?text=Logo"; 
+
             const [user, setUser] = React.useState(null);
             const [activeKid, setActiveKid] = React.useState(KIDS[0].name);
             const [activeTab, setActiveTab] = React.useState('chores');
@@ -164,19 +170,24 @@
                         setPermissionError(true);
                     }
                 };
-
+                
                 const unsubscribeChores = db.collection('chores')
-                    // .where('userId', '==', currentUid) // Temporarily removed for easier public testing
+                    // .where('userId', '==', currentUid) 
+                    .orderBy('createdAt', 'desc') 
                     .onSnapshot(snapshot => {
                         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                         setChores(data);
-                    }, handleError);
+                    }, (err) => {
+                        if(err.code === 'failed-precondition') {
+                           console.log("Index missing for sort");
+                        }
+                        handleError(err);
+                    });
 
                 const unsubscribeResp = db.collection('responsibilities')
+                    .orderBy('createdAt', 'desc')
                     .onSnapshot(snapshot => {
                         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                         setResponsibilities(data);
                     }, handleError);
                 
@@ -208,7 +219,7 @@
                         title: newChoreTitle,
                         value: val,
                         isDone: false,
-                        isPaid: false, // New field for Pay Out system
+                        isPaid: false, 
                         kid: activeKid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -253,19 +264,31 @@
             };
 
             const handlePayout = async (kidName, amount) => {
-                if(!confirm(`Mark $${amount.toFixed(2)} as PAID to ${kidName}?`)) return;
+                // Use explicit window.confirm to avoid environment blocking issues
+                const confirmed = window.confirm(`Mark $${amount.toFixed(2)} as PAID to ${kidName}?`);
+                if (!confirmed) return;
                 
-                // Confetti Effect
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
+                // Safety check for confetti lib
+                try {
+                    if (typeof confetti === 'function') {
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { y: 0.6 }
+                        });
+                    }
+                } catch(e) { console.log("Confetti skipped"); }
+                
                 playSuccessSound();
 
                 // Find all done but unpaid chores for this kid
                 const choresToPay = chores.filter(c => c.kid === kidName && c.isDone && !c.isPaid);
                 
+                if (choresToPay.length === 0) {
+                    alert("No chores found to pay!");
+                    return;
+                }
+
                 const batch = db.batch();
                 choresToPay.forEach(c => {
                     const ref = db.collection('chores').doc(c.id);
@@ -275,6 +298,7 @@
                 try {
                     await batch.commit();
                 } catch (error) {
+                    console.error("Payout error", error);
                     alert("Error processing payout: " + error.message);
                 }
             };
@@ -330,35 +354,48 @@
             const filteredResp = responsibilities.filter(r => r.kid === activeKid);
 
             const earnings = React.useMemo(() => {
-                const totals = { Finley: 0, James: 0, Liam: 0 };
+                const totals = { 
+                    current: { Finley: 0, James: 0, Liam: 0 },
+                    lifetime: { Finley: 0, James: 0, Liam: 0 }
+                };
+                
                 chores.forEach(c => {
-                    // Only count chores that are DONE and NOT PAID
-                    if (c.isDone && !c.isPaid && totals[c.kid] !== undefined) {
-                        totals[c.kid] += c.value;
+                    // Current Balance: DONE and NOT PAID
+                    if (c.isDone && !c.isPaid && totals.current[c.kid] !== undefined) {
+                        totals.current[c.kid] += c.value;
+                    }
+                    // Lifetime: DONE (regardless of paid status)
+                    if (c.isDone && totals.lifetime[c.kid] !== undefined) {
+                        totals.lifetime[c.kid] += c.value;
                     }
                 });
                 return totals;
             }, [chores]);
 
             return (
-                <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-800">
+                <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-800 tap-highlight-transparent">
                     
                     {/* Header */}
                     <div className="bg-white shadow-sm sticky top-0 z-10">
                         <div className="max-w-md mx-auto px-4 py-4">
-                            <div className="flex justify-center mb-4">
-                                <img src="IMG_0097.jpeg" alt="Earning Engine" className="h-16 object-contain" />
+                            <div className="flex justify-center mb-4 items-center gap-2">
+                                <img 
+                                    src={LOGO_URL} 
+                                    alt="Logo" 
+                                    className="h-10 w-auto object-contain rounded-md"
+                                />
+                                <h1 className="text-2xl font-black text-slate-800 tracking-tight">Earning Engine</h1>
                             </div>
-                            {activeTab !== 'money' && (
+                            {(activeTab === 'chores' || activeTab === 'responsibility') && (
                                 <div className="flex justify-between gap-2 p-1 bg-slate-100 rounded-xl">
                                     {KIDS.map(kid => (
                                         <button
                                             key={kid.name}
                                             onClick={() => setActiveKid(kid.name)}
-                                            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                                            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                                                 activeKid === kid.name 
-                                                    ? 'bg-white text-slate-800 shadow-md ring-1 ring-black/5' 
-                                                    : 'text-slate-400 hover:text-slate-600'
+                                                    ? 'bg-white text-slate-800 shadow-md ring-1 ring-black/5 scale-100' 
+                                                    : 'text-slate-400 hover:text-slate-600 scale-95'
                                             }`}
                                         >
                                             {kid.name}
@@ -377,7 +414,7 @@
                                 <div className="flex items-center justify-between mb-2">
                                     <h2 className="text-xl font-bold text-slate-700">{activeKid}'s Chores</h2>
                                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${currentKidData.color}`}>
-                                        Owed: ${earnings[activeKid].toFixed(2)}
+                                        Owed: ${earnings.current[activeKid].toFixed(2)}
                                     </span>
                                 </div>
 
@@ -403,7 +440,7 @@
                                         >
                                             <button 
                                                 onClick={() => toggleChore(chore)}
-                                                className="flex-shrink-0 mr-4 transition-transform active:scale-95"
+                                                className="flex-shrink-0 mr-4 transition-transform active:scale-95 touch-manipulation"
                                             >
                                                 {chore.isDone ? (
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentKidData.check}`}>
@@ -492,8 +529,8 @@
                                 
                                 <div className="grid gap-4">
                                     {KIDS.map((kid) => {
-                                        const amount = earnings[kid.name];
-                                        const isLeader = Math.max(...Object.values(earnings)) === amount && amount > 0;
+                                        const amount = earnings.current[kid.name];
+                                        const isLeader = Math.max(...Object.values(earnings.current)) === amount && amount > 0;
                                         
                                         return (
                                             <div key={kid.name} className={`relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border-2 transition-all ${isLeader ? 'border-yellow-400 ring-4 ring-yellow-400/10' : 'border-slate-100'}`}>
@@ -536,6 +573,62 @@
                                         <Icon name="dollar" className="w-5 h-5 flex-shrink-0" />
                                         <span>Clicking "Pay Out" will mark current chores as paid and reset the balance to $0.00.</span>
                                     </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* HISTORY TAB */}
+                        {activeTab === 'history' && (
+                            <div className="space-y-6">
+                                {/* Lifetime Stats */}
+                                <div className="grid grid-cols-3 gap-2">
+                                    {KIDS.map(kid => (
+                                        <div key={kid.name} className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${kid.color}`}>
+                                                {kid.name[0]}
+                                            </div>
+                                            <span className="text-xs text-slate-400 font-medium">All Time</span>
+                                            <span className="text-lg font-bold text-slate-700">${earnings.lifetime[kid.name].toFixed(0)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                                    <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                                        <Icon name="history" className="w-5 h-5 text-slate-400" />
+                                        <h3 className="font-bold text-slate-700">Recent Activity</h3>
+                                    </div>
+                                    <div className="divide-y divide-slate-100">
+                                        {chores.filter(c => c.isDone).slice(0, 30).map(chore => {
+                                            const k = KIDS.find(kid => kid.name === chore.kid) || KIDS[0];
+                                            return (
+                                                <div key={chore.id} className="p-4 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${k.color}`}>
+                                                            {k.name[0]}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-semibold text-slate-700 text-sm">{chore.title}</div>
+                                                            <div className="text-xs text-slate-400">
+                                                                {chore.createdAt ? new Date(chore.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-bold text-slate-700">${chore.value.toFixed(2)}</div>
+                                                        {chore.isPaid ? (
+                                                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">PAID</span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">PENDING</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {chores.filter(c => c.isDone).length === 0 && (
+                                            <div className="p-8 text-center text-slate-400 text-sm">No history yet</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -726,15 +819,18 @@
 
                     {/* Tab Bar */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 pb-safe z-40">
-                        <div className="max-w-md mx-auto flex justify-around items-center">
+                        <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
                             <button onClick={() => setActiveTab('chores')} className={`flex flex-col items-center gap-1 ${activeTab === 'chores' ? 'text-blue-600' : 'text-slate-400'}`}>
-                                <Icon name="list" className="w-6 h-6" /> <span className="text-xs font-medium">Chores</span>
+                                <Icon name="list" className="w-6 h-6" /> <span className="text-[10px] font-medium">Chores</span>
                             </button>
                             <button onClick={() => setActiveTab('responsibility')} className={`flex flex-col items-center gap-1 ${activeTab === 'responsibility' ? 'text-yellow-600' : 'text-slate-400'}`}>
-                                <Icon name="award" className="w-6 h-6" /> <span className="text-xs font-medium">Responsibility</span>
+                                <Icon name="award" className="w-6 h-6" /> <span className="text-[10px] font-medium">Stars</span>
                             </button>
                             <button onClick={() => setActiveTab('money')} className={`flex flex-col items-center gap-1 ${activeTab === 'money' ? 'text-green-600' : 'text-slate-400'}`}>
-                                <Icon name="dollar" className="w-6 h-6" /> <span className="text-xs font-medium">Money</span>
+                                <Icon name="dollar" className="w-6 h-6" /> <span className="text-[10px] font-medium">Money</span>
+                            </button>
+                            <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 ${activeTab === 'history' ? 'text-slate-800' : 'text-slate-400'}`}>
+                                <Icon name="history" className="w-6 h-6" /> <span className="text-[10px] font-medium">History</span>
                             </button>
                         </div>
                     </div>
