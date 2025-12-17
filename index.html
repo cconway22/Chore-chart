@@ -67,6 +67,8 @@
         }
 
         // --- 2. SOUND EFFECTS (Web Audio API) ---
+        
+        // Standard "Ding" for completing tasks
         const playSuccessSound = () => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -79,20 +81,52 @@
                 osc.connect(gain);
                 gain.connect(ctx.destination);
 
-                // Sound properties (High pitch 'ding')
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
                 osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.1); // D6
 
-                // Volume envelope
                 gain.gain.setValueAtTime(0.1, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
 
                 osc.start();
                 osc.stop(ctx.currentTime + 0.5);
-            } catch (e) {
-                console.error("Audio play failed", e);
-            }
+            } catch (e) { console.error("Audio play failed", e); }
+        };
+
+        // "Coin Shuffle" for Payout
+        const playCoinSound = () => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                // Create a burst of high frequency sounds to simulate coins hitting
+                const coinCount = 5;
+                for (let i = 0; i < coinCount; i++) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    // Random start time within a small window
+                    const startTime = ctx.currentTime + (Math.random() * 0.1);
+                    
+                    // High metallic frequencies (1500Hz - 3000Hz)
+                    const freq = 1500 + (Math.random() * 1500);
+                    
+                    osc.type = 'triangle'; // Metallic timbre
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    
+                    // Short decay
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.2);
+                }
+            } catch (e) { console.error("Audio play failed", e); }
         };
 
         // --- 3. ICONS ---
@@ -334,7 +368,7 @@
                     }
                 } catch(e) { console.log("Confetti skipped"); }
                 
-                playSuccessSound();
+                playCoinSound();
 
                 const choresToPay = chores.filter(c => c.kid === kidName && c.isDone && !c.isPaid);
                 
@@ -455,6 +489,14 @@
                 });
                 return totals;
             }, [chores]);
+
+            // Combine History
+            const combinedHistory = React.useMemo(() => {
+                const completedChores = chores.filter(c => c.isDone).map(c => ({...c, type: 'chore'}));
+                const respItems = responsibilities.map(r => ({...r, type: 'resp'}));
+                const combined = [...completedChores, ...respItems];
+                return combined.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            }, [chores, responsibilities]);
 
             return (
                 <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans text-slate-800 dark:text-slate-100 tap-highlight-transparent transition-colors duration-300">
@@ -692,33 +734,46 @@
                                         <h3 className="font-bold text-slate-700 dark:text-slate-200">Recent Activity</h3>
                                     </div>
                                     <div className="divide-y divide-slate-100 dark:divide-slate-700">
-                                        {chores.filter(c => c.isDone).slice(0, 30).map(chore => {
-                                            const k = KIDS.find(kid => kid.name === chore.kid) || KIDS[0];
+                                        {combinedHistory.slice(0, 30).map(item => {
+                                            const k = KIDS.find(kid => kid.name === item.kid) || KIDS[0];
+                                            const isChore = item.type === 'chore';
+                                            
                                             return (
-                                                <div key={chore.id} className="p-4 flex items-center justify-between">
+                                                <div key={item.id} className="p-4 flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${k.color}`}>
+                                                        <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${k.color}`}>
                                                             {k.name[0]}
                                                         </div>
                                                         <div>
-                                                            <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm">{chore.title}</div>
+                                                            <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm line-clamp-1">
+                                                                {isChore ? item.title : item.note}
+                                                            </div>
                                                             <div className="text-xs text-slate-400 dark:text-slate-500">
-                                                                {chore.createdAt ? new Date(chore.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                                                                {item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <div className="font-bold text-slate-700 dark:text-slate-200">${chore.value.toFixed(2)}</div>
-                                                        {chore.isPaid ? (
-                                                            <span className="text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">PAID</span>
+                                                    <div className="text-right flex-shrink-0 ml-2">
+                                                        {isChore ? (
+                                                            <>
+                                                                <div className="font-bold text-slate-700 dark:text-slate-200">${item.value.toFixed(2)}</div>
+                                                                {item.isPaid ? (
+                                                                    <span className="text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">PAID</span>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">PENDING</span>
+                                                                )}
+                                                            </>
                                                         ) : (
-                                                            <span className="text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">PENDING</span>
+                                                            <div className="flex items-center justify-end gap-1 text-yellow-500 font-bold">
+                                                                <span>{item.value || 1}</span>
+                                                                <Icon name="star" className="w-4 h-4 fill-current" />
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
                                             );
                                         })}
-                                        {chores.filter(c => c.isDone).length === 0 && (
+                                        {combinedHistory.length === 0 && (
                                             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No history yet</div>
                                         )}
                                     </div>
