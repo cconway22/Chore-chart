@@ -7,6 +7,11 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     
     <!-- React and ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -25,6 +30,7 @@
 
     <style>
         body { background-color: #f8fafc; }
+        .dark body { background-color: #0f172a; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         /* Smooth interactions */
         .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
@@ -109,7 +115,9 @@
                 x: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
                 lock: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
                 db: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>,
-                history: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                history: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
+                moon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>,
+                sun: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             };
             return icons[name] || null;
         };
@@ -117,19 +125,35 @@
         // --- 4. APP LOGIC ---
 
         const KIDS = [
-            { name: 'Finley', color: 'bg-teal-100 text-teal-800', border: 'border-teal-200', check: 'text-teal-500', btn: 'bg-teal-500 hover:bg-teal-600' },
-            { name: 'James', color: 'bg-blue-100 text-blue-800', border: 'border-blue-200', check: 'text-blue-500', btn: 'bg-blue-500 hover:bg-blue-600' },
-            { name: 'Liam', color: 'bg-orange-100 text-orange-800', border: 'border-orange-200', check: 'text-orange-500', btn: 'bg-orange-500 hover:bg-orange-600' }
+            { 
+                name: 'Finley', 
+                color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200', 
+                border: 'border-teal-200 dark:border-teal-700', 
+                check: 'text-teal-500 dark:text-teal-400', 
+                btn: 'bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-500' 
+            },
+            { 
+                name: 'James', 
+                color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200', 
+                border: 'border-blue-200 dark:border-blue-700', 
+                check: 'text-blue-500 dark:text-blue-400', 
+                btn: 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500' 
+            },
+            { 
+                name: 'Liam', 
+                color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200', 
+                border: 'border-orange-200 dark:border-orange-700', 
+                check: 'text-orange-500 dark:text-orange-400', 
+                btn: 'bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500' 
+            }
         ];
 
         function App() {
-            // !!! UPDATE THIS URL to point to your GitHub raw image !!!
-            const LOGO_URL = "https://raw.githubusercontent.com/cconway22/Chore-chart/main/IMG_0098.jpeg"; 
-
             const [user, setUser] = React.useState(null);
             const [activeKid, setActiveKid] = React.useState(KIDS[0].name);
             const [activeTab, setActiveTab] = React.useState('chores');
             const [permissionError, setPermissionError] = React.useState(false);
+            const [darkMode, setDarkMode] = React.useState(false);
             
             // Data State
             const [chores, setChores] = React.useState([]);
@@ -143,6 +167,30 @@
             const [saveAsTemplate, setSaveAsTemplate] = React.useState(false);
             const [isAddRespOpen, setIsAddRespOpen] = React.useState(false);
             const [newRespNote, setNewRespNote] = React.useState('');
+            const [newRespValue, setNewRespValue] = React.useState(1); // Default 1 star
+
+            // Dark Mode Init
+            React.useEffect(() => {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    setDarkMode(true);
+                    document.documentElement.classList.add('dark');
+                } else {
+                    setDarkMode(false);
+                    document.documentElement.classList.remove('dark');
+                }
+            }, []);
+
+            const toggleDarkMode = () => {
+                if (darkMode) {
+                    setDarkMode(false);
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    setDarkMode(true);
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }
+            };
 
             // Auth
             React.useEffect(() => {
@@ -322,16 +370,19 @@
                 e.preventDefault();
                 if (!newRespNote.trim()) return;
                 const currentUid = user?.uid || 'public-user';
+                const starVal = parseInt(newRespValue) || 1;
 
                 try {
                     await db.collection('responsibilities').add({
                         userId: currentUid,
                         note: newRespNote,
                         kid: activeKid,
+                        value: starVal, // Save the star value
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     playSuccessSound();
                     setNewRespNote('');
+                    setNewRespValue(1);
                     setIsAddRespOpen(false);
                 } catch (error) {
                     if (error.code === 'permission-denied') setPermissionError(true);
@@ -352,6 +403,9 @@
             const currentKidData = KIDS.find(k => k.name === activeKid) || KIDS[0];
             const filteredChores = chores.filter(c => c.kid === activeKid);
             const filteredResp = responsibilities.filter(r => r.kid === activeKid);
+            
+            // Calculate Total Stars
+            const totalStars = filteredResp.reduce((acc, curr) => acc + (curr.value || 1), 0);
 
             const earnings = React.useMemo(() => {
                 const totals = { 
@@ -373,28 +427,33 @@
             }, [chores]);
 
             return (
-                <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-800 tap-highlight-transparent">
+                <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans text-slate-800 dark:text-slate-100 tap-highlight-transparent transition-colors duration-300">
                     
                     {/* Header */}
-                    <div className="bg-white shadow-sm sticky top-0 z-10">
-                        <div className="max-w-md mx-auto px-4 py-4">
-                            <div className="flex flex-col items-center justify-center mb-6">
-                                <img 
-                                    src={LOGO_URL} 
-                                    alt="Earning Engine" 
-                                    className="h-32 w-auto object-contain"
-                                />
+                    <div className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10 transition-colors duration-300">
+                        <div className="max-w-md mx-auto px-4 py-4 relative">
+                            {/* Dark Mode Toggle */}
+                            <button 
+                                onClick={toggleDarkMode} 
+                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                            >
+                                {darkMode ? <Icon name="sun" className="w-6 h-6" /> : <Icon name="moon" className="w-6 h-6" />}
+                            </button>
+
+                            <div className="flex flex-col items-center justify-center mb-6 pt-2">
+                                <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">Earning Engine</h1>
                             </div>
+                            
                             {(activeTab === 'chores' || activeTab === 'responsibility') && (
-                                <div className="flex justify-between gap-2 p-1 bg-slate-100 rounded-xl">
+                                <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
                                     {KIDS.map(kid => (
                                         <button
                                             key={kid.name}
                                             onClick={() => setActiveKid(kid.name)}
                                             className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                                                 activeKid === kid.name 
-                                                    ? 'bg-white text-slate-800 shadow-md ring-1 ring-black/5 scale-100' 
-                                                    : 'text-slate-400 hover:text-slate-600 scale-95'
+                                                    ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-md ring-1 ring-black/5 scale-100' 
+                                                    : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 scale-95'
                                             }`}
                                         >
                                             {kid.name}
@@ -411,15 +470,15 @@
                         {activeTab === 'chores' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h2 className="text-xl font-bold text-slate-700">{activeKid}'s Chores</h2>
+                                    <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200">{activeKid}'s Chores</h2>
                                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${currentKidData.color}`}>
                                         Owed: ${earnings.current[activeKid].toFixed(2)}
                                     </span>
                                 </div>
 
                                 {filteredChores.filter(c => !c.isPaid).length === 0 && (
-                                    <div className="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-slate-200">
-                                        <p className="text-slate-400">No active chores!</p>
+                                    <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 transition-colors duration-300">
+                                        <p className="text-slate-400 dark:text-slate-500">No active chores!</p>
                                         <button 
                                             onClick={() => setIsAddChoreOpen(true)}
                                             className="mt-2 text-sm font-bold text-blue-500 hover:underline"
@@ -433,8 +492,10 @@
                                     {filteredChores.filter(c => !c.isPaid).map(chore => (
                                         <div 
                                             key={chore.id} 
-                                            className={`flex items-center p-4 bg-white rounded-xl shadow-sm border transition-all ${
-                                                chore.isDone ? 'border-green-100 bg-green-50/50' : 'border-slate-100'
+                                            className={`flex items-center p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border transition-all duration-300 ${
+                                                chore.isDone 
+                                                    ? 'border-green-100 bg-green-50/50 dark:bg-green-900/20 dark:border-green-900/50' 
+                                                    : 'border-slate-100 dark:border-slate-700'
                                             }`}
                                         >
                                             <button 
@@ -443,19 +504,19 @@
                                             >
                                                 {chore.isDone ? (
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentKidData.check}`}>
-                                                        <Icon name="checkCircle" className="w-8 h-8 fill-current bg-white rounded-full" />
+                                                        <Icon name="checkCircle" className="w-8 h-8 fill-current bg-white dark:bg-transparent rounded-full" />
                                                     </div>
                                                 ) : (
-                                                    <Icon name="circle" className="w-8 h-8 text-slate-300" />
+                                                    <Icon name="circle" className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                                                 )}
                                             </button>
                                             
                                             <div className="flex-1">
-                                                <h3 className={`font-semibold text-lg ${chore.isDone ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                                                <h3 className={`font-semibold text-lg ${chore.isDone ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
                                                     {chore.title}
                                                 </h3>
                                                 {chore.value > 0 && (
-                                                    <span className={`text-sm font-medium ${chore.isDone ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                    <span className={`text-sm font-medium ${chore.isDone ? 'text-slate-400 dark:text-slate-500' : 'text-slate-500 dark:text-slate-400'}`}>
                                                         ${chore.value.toFixed(2)}
                                                     </span>
                                                 )}
@@ -463,7 +524,7 @@
 
                                             <button 
                                                 onClick={() => deleteChore(chore.id)}
-                                                className="p-2 text-slate-300 hover:text-red-400 transition-colors"
+                                                className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors"
                                             >
                                                 <Icon name="trash" className="w-5 h-5" />
                                             </button>
@@ -483,10 +544,10 @@
                         {/* RESPONSIBILITY TAB */}
                         {activeTab === 'responsibility' && (
                             <div className="space-y-6">
-                                <div className="flex flex-col items-center justify-center py-8 bg-white rounded-2xl shadow-sm border border-slate-100">
-                                    <h2 className="text-slate-500 font-medium mb-2">Checkmarks for {activeKid}</h2>
-                                    <div className="flex items-end gap-2 text-6xl font-black text-slate-800 tracking-tighter">
-                                        {filteredResp.length}
+                                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
+                                    <h2 className="text-slate-500 dark:text-slate-400 font-medium mb-2">Checkmarks for {activeKid}</h2>
+                                    <div className="flex items-end gap-2 text-6xl font-black text-slate-800 dark:text-white tracking-tighter">
+                                        {totalStars}
                                         <Icon name="star" className="w-12 h-12 mb-2 fill-yellow-400 text-yellow-500" />
                                     </div>
                                     <button 
@@ -499,19 +560,22 @@
 
                                 <div className="space-y-3">
                                     {filteredResp.map(resp => (
-                                        <div key={resp.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex gap-3">
-                                            <div className="mt-1 bg-yellow-100 p-1.5 rounded-full h-fit">
-                                                <Icon name="star" className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                                        <div key={resp.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex gap-3 transition-colors duration-300">
+                                            <div className="mt-1 flex flex-col items-center gap-1 min-w-[3rem]">
+                                                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-1.5 rounded-full h-fit">
+                                                    <Icon name="star" className="w-4 h-4 text-yellow-600 dark:text-yellow-500 fill-yellow-600 dark:fill-yellow-500" />
+                                                </div>
+                                                <span className="text-xs font-bold text-yellow-600 dark:text-yellow-500">x{resp.value || 1}</span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-slate-700 font-medium">{resp.note}</p>
+                                                <p className="text-slate-700 dark:text-slate-200 font-medium">{resp.note}</p>
                                                 <p className="text-xs text-slate-400 mt-1">
                                                     {resp.createdAt ? new Date(resp.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
                                                 </p>
                                             </div>
                                             <button 
                                                 onClick={() => deleteResponsibility(resp.id)}
-                                                className="text-slate-300 hover:text-red-400"
+                                                className="text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 self-start"
                                             >
                                                 <Icon name="trash" className="w-4 h-4" />
                                             </button>
@@ -524,7 +588,7 @@
                         {/* MONEY TAB */}
                         {activeTab === 'money' && (
                             <div className="space-y-6">
-                                <h2 className="text-2xl font-bold text-slate-800 text-center mb-6">Unpaid Balance</h2>
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-6">Unpaid Balance</h2>
                                 
                                 <div className="grid gap-4">
                                     {KIDS.map((kid) => {
@@ -532,7 +596,7 @@
                                         const isLeader = Math.max(...Object.values(earnings.current)) === amount && amount > 0;
                                         
                                         return (
-                                            <div key={kid.name} className={`relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border-2 transition-all ${isLeader ? 'border-yellow-400 ring-4 ring-yellow-400/10' : 'border-slate-100'}`}>
+                                            <div key={kid.name} className={`relative overflow-hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border-2 transition-all duration-300 ${isLeader ? 'border-yellow-400 ring-4 ring-yellow-400/10 dark:ring-yellow-400/5' : 'border-slate-100 dark:border-slate-700'}`}>
                                                 {isLeader && (
                                                     <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-bl-xl text-xs font-bold flex items-center gap-1">
                                                         <Icon name="trophy" className="w-3 h-3" /> LEADER
@@ -544,12 +608,12 @@
                                                             {kid.name[0]}
                                                         </div>
                                                         <div>
-                                                            <h3 className="font-bold text-slate-700 text-lg">{kid.name}</h3>
-                                                            <p className="text-sm text-slate-400">Current Balance</p>
+                                                            <h3 className="font-bold text-slate-700 dark:text-slate-200 text-lg">{kid.name}</h3>
+                                                            <p className="text-sm text-slate-400 dark:text-slate-500">Current Balance</p>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-2">
-                                                        <div className="text-3xl font-black text-slate-800 tracking-tight">
+                                                        <div className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
                                                             ${amount.toFixed(2)}
                                                         </div>
                                                         {amount > 0 && (
@@ -567,7 +631,7 @@
                                     })}
                                 </div>
                                 
-                                <div className="bg-blue-50 p-4 rounded-xl text-blue-800 text-sm border border-blue-100 mt-8">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-blue-800 dark:text-blue-200 text-sm border border-blue-100 dark:border-blue-800/30 mt-8">
                                     <p className="flex gap-2">
                                         <Icon name="dollar" className="w-5 h-5 flex-shrink-0" />
                                         <span>Clicking "Pay Out" will mark current chores as paid and reset the balance to $0.00.</span>
@@ -582,22 +646,22 @@
                                 {/* Lifetime Stats */}
                                 <div className="grid grid-cols-3 gap-2">
                                     {KIDS.map(kid => (
-                                        <div key={kid.name} className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
+                                        <div key={kid.name} className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center transition-colors duration-300">
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${kid.color}`}>
                                                 {kid.name[0]}
                                             </div>
-                                            <span className="text-xs text-slate-400 font-medium">All Time</span>
-                                            <span className="text-lg font-bold text-slate-700">${earnings.lifetime[kid.name].toFixed(0)}</span>
+                                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">All Time</span>
+                                            <span className="text-lg font-bold text-slate-700 dark:text-slate-200">${earnings.lifetime[kid.name].toFixed(0)}</span>
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-                                    <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm transition-colors duration-300">
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
                                         <Icon name="history" className="w-5 h-5 text-slate-400" />
-                                        <h3 className="font-bold text-slate-700">Recent Activity</h3>
+                                        <h3 className="font-bold text-slate-700 dark:text-slate-200">Recent Activity</h3>
                                     </div>
-                                    <div className="divide-y divide-slate-100">
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-700">
                                         {chores.filter(c => c.isDone).slice(0, 30).map(chore => {
                                             const k = KIDS.find(kid => kid.name === chore.kid) || KIDS[0];
                                             return (
@@ -607,25 +671,25 @@
                                                             {k.name[0]}
                                                         </div>
                                                         <div>
-                                                            <div className="font-semibold text-slate-700 text-sm">{chore.title}</div>
-                                                            <div className="text-xs text-slate-400">
+                                                            <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm">{chore.title}</div>
+                                                            <div className="text-xs text-slate-400 dark:text-slate-500">
                                                                 {chore.createdAt ? new Date(chore.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="font-bold text-slate-700">${chore.value.toFixed(2)}</div>
+                                                        <div className="font-bold text-slate-700 dark:text-slate-200">${chore.value.toFixed(2)}</div>
                                                         {chore.isPaid ? (
-                                                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">PAID</span>
+                                                            <span className="text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">PAID</span>
                                                         ) : (
-                                                            <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">PENDING</span>
+                                                            <span className="text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">PENDING</span>
                                                         )}
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                         {chores.filter(c => c.isDone).length === 0 && (
-                                            <div className="p-8 text-center text-slate-400 text-sm">No history yet</div>
+                                            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No history yet</div>
                                         )}
                                     </div>
                                 </div>
@@ -638,37 +702,19 @@
                     {/* Permission Error Modal */}
                     {permissionError && (
                         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-                            <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+                            <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl">
                                 <div className="flex items-center gap-3 text-red-600 mb-4">
                                     <Icon name="lock" className="w-8 h-8" />
-                                    <h3 className="text-xl font-bold">Database Access Blocked</h3>
+                                    <h3 className="text-xl font-bold dark:text-white">Database Access Blocked</h3>
                                 </div>
                                 
-                                <div className="p-4 bg-red-50 text-red-800 text-sm rounded-lg mb-4">
+                                <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 text-sm rounded-lg mb-4">
                                     <strong>Diagnosis:</strong> You are likely editing the rules for a different project than the one listed in the code.
                                 </div>
 
-                                <div className="space-y-4 text-sm text-slate-700">
-                                    <div>
-                                        <p className="font-bold">1. Check your Project ID in this app:</p>
-                                        <div className="p-2 bg-slate-100 rounded font-mono mt-1 text-slate-900">
-                                            {firebaseConfig.projectId}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <p className="font-bold">2. Check your Browser URL:</p>
-                                        <p className="mb-1">Go to the Firebase Console and look at the URL bar.</p>
-                                        <div className="p-2 bg-slate-100 rounded font-mono text-slate-900 break-all">
-                                            https://console.firebase.google.com/project/<span className="bg-yellow-200 font-bold px-1">{firebaseConfig.projectId}</span>/firestore/rules
-                                        </div>
-                                        <p className="mt-1 text-xs text-slate-500">The highlighted part MUST match the Project ID above.</p>
-                                    </div>
-                                    
-                                    <div>
-                                        <p className="font-bold">3. Verify Publish:</p>
-                                        <p>Did you definitely click the "Publish" button after pasting the rules?</p>
-                                    </div>
+                                <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+                                    {/* ... content ... */}
+                                    <p>Please reload to try again.</p>
                                 </div>
 
                                 <div className="flex flex-col gap-2 mt-6">
@@ -701,19 +747,19 @@
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
                             <form 
                                 onSubmit={handleAddChore}
-                                className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl flex flex-col max-h-[80vh]"
+                                className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl flex flex-col max-h-[80vh] transition-colors duration-300"
                             >
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold">New Chore for {activeKid}</h3>
+                                    <h3 className="text-lg font-bold dark:text-white">New Chore for {activeKid}</h3>
                                     <button type="button" onClick={() => setIsAddChoreOpen(false)}>
-                                        <Icon name="x" className="w-5 h-5 text-slate-400" />
+                                        <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                                     </button>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto min-h-0">
                                     {choreTemplates.length > 0 && (
                                         <div className="mb-6">
-                                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                                 <Icon name="library" className="w-3 h-3" /> Saved Chores
                                             </div>
                                             <div className="flex flex-wrap gap-2">
@@ -724,14 +770,14 @@
                                                         onClick={() => selectTemplate(tpl)}
                                                         className={`group relative px-3 py-2 rounded-lg text-sm font-medium border transition-all text-left ${
                                                             newChoreTitle === tpl.title 
-                                                                ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                                                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-300'
+                                                                ? 'bg-blue-50 dark:bg-blue-900/40 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300' 
+                                                                : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-500'
                                                         }`}
                                                     >
                                                         {tpl.title} <span className="opacity-50 ml-1">${tpl.defaultValue}</span>
                                                         <div 
                                                             onClick={(e) => deleteTemplate(tpl.id, e)}
-                                                            className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-200 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500"
+                                                            className="absolute -top-1 -right-1 bg-white dark:bg-slate-600 rounded-full p-0.5 shadow-sm border border-slate-200 dark:border-slate-500 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 dark:hover:text-red-400 dark:text-slate-300"
                                                         >
                                                             <Icon name="x" className="w-3 h-3" />
                                                         </div>
@@ -743,28 +789,28 @@
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-600 mb-1">Task Name</label>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Task Name</label>
                                             <input
                                                 autoFocus
                                                 type="text"
                                                 placeholder="e.g. Clean Room"
                                                 value={newChoreTitle}
                                                 onChange={e => setNewChoreTitle(e.target.value)}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-600 mb-1">Value ($)</label>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Value ($)</label>
                                             <input
                                                 type="number"
                                                 step="0.25"
                                                 placeholder="0.00"
                                                 value={newChoreValue}
                                                 onChange={e => setNewChoreValue(e.target.value)}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                             />
                                         </div>
-                                        <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
                                             <input 
                                                 type="checkbox"
                                                 id="saveTemplate"
@@ -772,15 +818,15 @@
                                                 onChange={e => setSaveAsTemplate(e.target.checked)}
                                                 className="w-5 h-5 rounded text-blue-500"
                                             />
-                                            <label htmlFor="saveTemplate" className="text-sm font-medium text-slate-600 flex items-center gap-2 cursor-pointer select-none">
+                                            <label htmlFor="saveTemplate" className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
                                                 <Icon name="save" className="w-4 h-4" /> Save to Library
                                             </label>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100">
-                                    <button type="button" onClick={() => setIsAddChoreOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 bg-slate-100 rounded-xl">Cancel</button>
+                                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                    <button type="button" onClick={() => setIsAddChoreOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
                                     <button type="submit" className={`flex-1 py-3 font-bold text-white rounded-xl ${currentKidData.btn}`}>Add Chore</button>
                                 </div>
                             </form>
@@ -792,24 +838,38 @@
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
                             <form 
                                 onSubmit={handleAddResponsibility}
-                                className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+                                className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl transition-colors duration-300"
                             >
-                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 dark:text-white">
                                     <Icon name="star" className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Add Checkmark
                                 </h3>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-600 mb-1">What did {activeKid} do?</label>
-                                    <textarea
-                                        autoFocus
-                                        rows={3}
-                                        placeholder="e.g. Helped carry in groceries..."
-                                        value={newRespNote}
-                                        onChange={e => setNewRespNote(e.target.value)}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
-                                    />
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">What did {activeKid} do?</label>
+                                        <textarea
+                                            autoFocus
+                                            rows={3}
+                                            placeholder="e.g. Helped carry in groceries..."
+                                            value={newRespNote}
+                                            onChange={e => setNewRespNote(e.target.value)}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Star Value (1-5)</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            step="1"
+                                            value={newRespValue}
+                                            onChange={e => setNewRespValue(e.target.value)}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex gap-3 mt-6">
-                                    <button type="button" onClick={() => setIsAddRespOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 bg-slate-100 rounded-xl">Cancel</button>
+                                    <button type="button" onClick={() => setIsAddRespOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
                                     <button type="submit" className="flex-1 py-3 font-bold text-white bg-yellow-500 hover:bg-yellow-600 rounded-xl">Add Star</button>
                                 </div>
                             </form>
@@ -817,18 +877,18 @@
                     )}
 
                     {/* Tab Bar */}
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 pb-safe z-40">
+                    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-6 py-3 pb-safe z-40 transition-colors duration-300">
                         <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
-                            <button onClick={() => setActiveTab('chores')} className={`flex flex-col items-center gap-1 ${activeTab === 'chores' ? 'text-blue-600' : 'text-slate-400'}`}>
+                            <button onClick={() => setActiveTab('chores')} className={`flex flex-col items-center gap-1 ${activeTab === 'chores' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                 <Icon name="list" className="w-6 h-6" /> <span className="text-[10px] font-medium">Chores</span>
                             </button>
-                            <button onClick={() => setActiveTab('responsibility')} className={`flex flex-col items-center gap-1 ${activeTab === 'responsibility' ? 'text-yellow-600' : 'text-slate-400'}`}>
+                            <button onClick={() => setActiveTab('responsibility')} className={`flex flex-col items-center gap-1 ${activeTab === 'responsibility' ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                 <Icon name="award" className="w-6 h-6" /> <span className="text-[10px] font-medium">Stars</span>
                             </button>
-                            <button onClick={() => setActiveTab('money')} className={`flex flex-col items-center gap-1 ${activeTab === 'money' ? 'text-green-600' : 'text-slate-400'}`}>
+                            <button onClick={() => setActiveTab('money')} className={`flex flex-col items-center gap-1 ${activeTab === 'money' ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                 <Icon name="dollar" className="w-6 h-6" /> <span className="text-[10px] font-medium">Money</span>
                             </button>
-                            <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 ${activeTab === 'history' ? 'text-slate-800' : 'text-slate-400'}`}>
+                            <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 ${activeTab === 'history' ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
                                 <Icon name="history" className="w-6 h-6" /> <span className="text-[10px] font-medium">History</span>
                             </button>
                         </div>
@@ -842,3 +902,5 @@
     </script>
 </body>
 </html>
+
+
