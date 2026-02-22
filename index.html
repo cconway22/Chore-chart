@@ -68,7 +68,7 @@
 
         // --- 2. SOUND EFFECTS (Web Audio API) ---
         
-        // Standard "Ding" for completing tasks
+        // Standard "Ding" for completing tasks/stars
         const playSuccessSound = () => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -101,7 +101,7 @@
                 const ctx = new AudioContext();
 
                 // Create a burst of high frequency sounds to simulate coins hitting
-                const coinCount = 5;
+                const coinCount = 8;
                 for (let i = 0; i < coinCount; i++) {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -110,10 +110,10 @@
                     gain.connect(ctx.destination);
 
                     // Random start time within a small window
-                    const startTime = ctx.currentTime + (Math.random() * 0.1);
+                    const startTime = ctx.currentTime + (Math.random() * 0.2);
                     
-                    // High metallic frequencies (1500Hz - 3000Hz)
-                    const freq = 1500 + (Math.random() * 1500);
+                    // High metallic frequencies (1500Hz - 4000Hz)
+                    const freq = 1500 + (Math.random() * 2500);
                     
                     osc.type = 'triangle'; // Metallic timbre
                     osc.frequency.setValueAtTime(freq, startTime);
@@ -126,6 +126,30 @@
                     osc.start(startTime);
                     osc.stop(startTime + 0.2);
                 }
+            } catch (e) { console.error("Audio play failed", e); }
+        };
+
+        // Negative sound for saying "No"
+        const playFailSound = () => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, ctx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3); 
+
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
             } catch (e) { console.error("Audio play failed", e); }
         };
 
@@ -150,7 +174,11 @@
                 db: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>,
                 history: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
                 moon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>,
-                sun: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                sun: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>,
+                thumbsUp: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>,
+                thumbsDown: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-2"></path></svg>,
+                wallet: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>,
+                message: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             };
             return icons[name] || null;
         };
@@ -160,6 +188,10 @@
         const KIDS = [
             { 
                 name: 'Finley', 
+                age: 11,
+                allowance: 11.00, 
+                penalty: 1.00,    // Deducted per 'No'
+                bonus: 0.50,      // Earned per 'Yes'
                 color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200', 
                 border: 'border-teal-200 dark:border-teal-700', 
                 check: 'text-teal-500 dark:text-teal-400', 
@@ -167,6 +199,10 @@
             },
             { 
                 name: 'James', 
+                age: 9,           
+                allowance: 9.00, 
+                penalty: 1.00,
+                bonus: 0.50,
                 color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200', 
                 border: 'border-blue-200 dark:border-blue-700', 
                 check: 'text-blue-500 dark:text-blue-400', 
@@ -174,6 +210,10 @@
             },
             { 
                 name: 'Liam', 
+                age: 8,           
+                allowance: 8.00, 
+                penalty: 1.00,
+                bonus: 0.50,
                 color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200', 
                 border: 'border-orange-200 dark:border-orange-700', 
                 check: 'text-orange-500 dark:text-orange-400', 
@@ -184,26 +224,29 @@
         function App() {
             const [user, setUser] = React.useState(null);
             const [activeKid, setActiveKid] = React.useState(KIDS[0].name);
-            const [activeTab, setActiveTab] = React.useState('chores');
+            const [activeTab, setActiveTab] = React.useState('asks');
             const [permissionError, setPermissionError] = React.useState(false);
             const [darkMode, setDarkMode] = React.useState(false);
             
             // Data State
-            const [chores, setChores] = React.useState([]);
+            const [asks, setAsks] = React.useState([]); 
             const [responsibilities, setResponsibilities] = React.useState([]);
-            const [choreTemplates, setChoreTemplates] = React.useState([]);
+            const [payouts, setPayouts] = React.useState([]);
+            const [askTemplates, setAskTemplates] = React.useState([]);
             const [respTemplates, setRespTemplates] = React.useState([]);
             
             // UI State
-            const [isAddChoreOpen, setIsAddChoreOpen] = React.useState(false);
-            const [newChoreTitle, setNewChoreTitle] = React.useState('');
-            const [newChoreValue, setNewChoreValue] = React.useState('');
-            const [saveAsTemplate, setSaveAsTemplate] = React.useState(false);
+            const [isAddAskOpen, setIsAddAskOpen] = React.useState(false);
+            const [newAskTask, setNewAskTask] = React.useState('');
+            const [saveAskAsTemplate, setSaveAskAsTemplate] = React.useState(false);
 
             const [isAddRespOpen, setIsAddRespOpen] = React.useState(false);
             const [newRespNote, setNewRespNote] = React.useState('');
             const [newRespValue, setNewRespValue] = React.useState(1);
             const [saveRespAsTemplate, setSaveRespAsTemplate] = React.useState(false);
+            
+            // New state for custom payout modal
+            const [payoutConfirmData, setPayoutConfirmData] = React.useState(null);
 
             // Dark Mode Init
             React.useEffect(() => {
@@ -255,17 +298,12 @@
                     }
                 };
                 
-                const unsubscribeChores = db.collection('chores')
+                const unsubscribeAsks = db.collection('asks')
                     .orderBy('createdAt', 'desc') 
                     .onSnapshot(snapshot => {
                         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        setChores(data);
-                    }, (err) => {
-                        if(err.code === 'failed-precondition') {
-                           console.log("Index missing for sort");
-                        }
-                        handleError(err);
-                    });
+                        setAsks(data);
+                    }, handleError);
 
                 const unsubscribeResp = db.collection('responsibilities')
                     .orderBy('createdAt', 'desc')
@@ -273,12 +311,19 @@
                         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         setResponsibilities(data);
                     }, handleError);
-                
-                const unsubscribeTpl = db.collection('chore_templates')
+
+                const unsubscribePayouts = db.collection('payouts')
+                    .orderBy('createdAt', 'desc')
                     .onSnapshot(snapshot => {
                         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        data.sort((a,b) => a.title.localeCompare(b.title));
-                        setChoreTemplates(data);
+                        setPayouts(data);
+                    }, handleError);
+                
+                const unsubscribeAskTpl = db.collection('ask_templates')
+                    .onSnapshot(snapshot => {
+                        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        data.sort((a,b) => a.task.localeCompare(b.task));
+                        setAskTemplates(data);
                     }, handleError);
 
                 const unsubscribeRespTpl = db.collection('responsibility_templates')
@@ -289,140 +334,79 @@
                     }, handleError);
 
                 return () => {
-                    unsubscribeChores();
+                    unsubscribeAsks();
                     unsubscribeResp();
-                    unsubscribeTpl();
+                    unsubscribePayouts();
+                    unsubscribeAskTpl();
                     unsubscribeRespTpl();
                 };
             }, [user]);
 
-            // Actions
-            const handleAddChore = async (e) => {
-                e.preventDefault();
-                if (!newChoreTitle.trim()) return;
+            // Handlers: Asks
+            const handleAddAsk = async (response) => {
+                if (!newAskTask.trim()) return; // Removed alert to prevent freezing
                 
-                const val = parseFloat(newChoreValue) || 0;
                 const currentUid = user?.uid || 'public-user';
 
                 try {
-                    await db.collection('chores').add({
+                    await db.collection('asks').add({
                         userId: currentUid,
-                        title: newChoreTitle,
-                        value: val,
-                        isDone: false,
+                        task: newAskTask,
+                        response: response, // 'yes' or 'no'
                         isPaid: false, 
                         kid: activeKid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    if (saveAsTemplate) {
-                        const exists = choreTemplates.some(t => t.title.toLowerCase() === newChoreTitle.toLowerCase());
+                    if (saveAskAsTemplate) {
+                        const exists = askTemplates.some(t => t.task.toLowerCase() === newAskTask.toLowerCase());
                         if (!exists) {
-                            await db.collection('chore_templates').add({
+                            await db.collection('ask_templates').add({
                                 userId: currentUid,
-                                title: newChoreTitle,
-                                defaultValue: val
+                                task: newAskTask
                             });
                         }
                     }
-                    setNewChoreTitle('');
-                    setNewChoreValue('');
-                    setSaveAsTemplate(false);
-                    setIsAddChoreOpen(false);
+
+                    if (response === 'yes') playSuccessSound();
+                    else playFailSound();
+
+                    setNewAskTask('');
+                    setSaveAskAsTemplate(false);
+                    setIsAddAskOpen(false);
                 } catch (error) {
                     if (error.code === 'permission-denied') setPermissionError(true);
-                    else alert("Error: " + error.message);
+                    else console.error("Error: ", error);
                 }
             };
 
-            const toggleChore = async (chore) => {
+            const deleteAsk = async (id) => {
+                // Removed window.confirm so the "Undo" is instant and doesn't get blocked
                 try {
-                    const newStatus = !chore.isDone;
-                    await db.collection('chores').doc(chore.id).update({ isDone: newStatus });
-                    if(newStatus) playSuccessSound(); // Play sound if checking off
-                } catch (error) {
-                    if (error.code === 'permission-denied') setPermissionError(true);
-                }
-            };
-
-            const deleteChore = async (id) => {
-                if(!confirm("Delete this chore?")) return;
-                try {
-                    await db.collection('chores').doc(id).delete();
+                    await db.collection('asks').doc(id).delete();
                 } catch (error) {
                     if (error.code === 'permission-denied') setPermissionError(true);
                 }
             };
 
-            const handlePayout = async (kidName, amount) => {
-                const confirmed = window.confirm(`Mark $${amount.toFixed(2)} as PAID to ${kidName}?`);
-                if (!confirmed) return;
-                
-                try {
-                    if (typeof confetti === 'function') {
-                        confetti({
-                            particleCount: 100,
-                            spread: 70,
-                            origin: { y: 0.6 }
-                        });
-                    }
-                } catch(e) { console.log("Confetti skipped"); }
-                
-                playCoinSound();
-
-                const choresToPay = chores.filter(c => c.kid === kidName && c.isDone && !c.isPaid);
-                
-                if (choresToPay.length === 0) {
-                    alert("No chores found to pay!");
-                    return;
-                }
-
-                const batch = db.batch();
-                choresToPay.forEach(c => {
-                    const ref = db.collection('chores').doc(c.id);
-                    batch.update(ref, { isPaid: true });
-                });
-
-                try {
-                    await batch.commit();
-                } catch (error) {
-                    alert("Error processing payout: " + error.message);
-                }
-            };
-
-            const deleteTemplate = async (id, e) => {
+            const deleteAskTemplate = async (id, e) => {
                 e.stopPropagation();
                 try {
-                    await db.collection('chore_templates').doc(id).delete();
+                    await db.collection('ask_templates').doc(id).delete();
                 } catch (error) {
                     if (error.code === 'permission-denied') setPermissionError(true);
                 }
             };
 
-            const deleteRespTemplate = async (id, e) => {
-                e.stopPropagation();
-                try {
-                    await db.collection('responsibility_templates').doc(id).delete();
-                } catch (error) {
-                    if (error.code === 'permission-denied') setPermissionError(true);
-                }
+            const selectAskTemplate = (tpl) => {
+                setNewAskTask(tpl.task);
+                setSaveAskAsTemplate(false);
             };
 
-            const selectTemplate = (tpl) => {
-                setNewChoreTitle(tpl.title);
-                setNewChoreValue(tpl.defaultValue.toString());
-                setSaveAsTemplate(false);
-            };
-
-            const selectRespTemplate = (tpl) => {
-                setNewRespNote(tpl.note);
-                setNewRespValue(tpl.defaultValue || 1);
-                setSaveRespAsTemplate(false);
-            };
-
+            // Handlers: Responsibilities
             const handleAddResponsibility = async (e) => {
                 e.preventDefault();
-                if (!newRespNote.trim()) return;
+                if (!newRespNote.trim()) return; // Removed alert to prevent freezing
                 const currentUid = user?.uid || 'public-user';
                 const starVal = parseInt(newRespValue) || 1;
 
@@ -453,12 +437,12 @@
                     setIsAddRespOpen(false);
                 } catch (error) {
                     if (error.code === 'permission-denied') setPermissionError(true);
-                    else alert("Error: " + error.message);
+                    else console.error("Error: ", error);
                 }
             };
 
             const deleteResponsibility = async (id) => {
-                if(!confirm("Delete this note?")) return;
+                // Removed window.confirm so it deletes instantly
                 try {
                     await db.collection('responsibilities').doc(id).delete();
                 } catch (error) {
@@ -466,37 +450,137 @@
                 }
             };
 
-            // Calculated Values
+            const deleteRespTemplate = async (id, e) => {
+                e.stopPropagation();
+                try {
+                    await db.collection('responsibility_templates').doc(id).delete();
+                } catch (error) {
+                    if (error.code === 'permission-denied') setPermissionError(true);
+                }
+            };
+
+            const selectRespTemplate = (tpl) => {
+                setNewRespNote(tpl.note);
+                setNewRespValue(tpl.defaultValue || 1);
+                setSaveRespAsTemplate(false);
+            };
+
+            // Calculate current kid data & earnings
             const currentKidData = KIDS.find(k => k.name === activeKid) || KIDS[0];
-            const filteredChores = chores.filter(c => c.kid === activeKid);
+            const filteredAsks = asks.filter(a => a.kid === activeKid && !a.isPaid);
             const filteredResp = responsibilities.filter(r => r.kid === activeKid);
             
             const totalStars = filteredResp.reduce((acc, curr) => acc + (curr.value || 1), 0);
 
-            const earnings = React.useMemo(() => {
-                const totals = { 
-                    current: { Finley: 0, James: 0, Liam: 0 },
-                    lifetime: { Finley: 0, James: 0, Liam: 0 }
-                };
-                
-                chores.forEach(c => {
-                    if (c.isDone && !c.isPaid && totals.current[c.kid] !== undefined) {
-                        totals.current[c.kid] += c.value;
-                    }
-                    if (c.isDone && totals.lifetime[c.kid] !== undefined) {
-                        totals.lifetime[c.kid] += c.value;
-                    }
+            // Calculate weekly earnings dynamically for all kids
+            const currentEarnings = React.useMemo(() => {
+                const totals = {};
+                KIDS.forEach(k => {
+                    const kAsks = asks.filter(a => a.kid === k.name && !a.isPaid);
+                    
+                    const countYes = kAsks.filter(a => a.response === 'yes').length;
+                    const countNo = kAsks.filter(a => a.response === 'no').length;
+                    
+                    const deductions = countNo * k.penalty;
+                    
+                    // EVERY 'Yes' earns a bonus, making it possible to 'earn back' a 'No'
+                    const bonusAmount = countYes * k.bonus; 
+                    
+                    let earned = k.allowance - deductions + bonusAmount;
+                    if (earned < 0) earned = 0; // Floor at 0 so they don't owe money
+
+                    totals[k.name] = {
+                        base: k.allowance,
+                        deductions: deductions,
+                        bonus: bonusAmount,
+                        yesCount: countYes,
+                        noCount: countNo,
+                        earned: earned,
+                        cash: earned / 2,
+                        savings: earned / 2
+                    };
                 });
                 return totals;
-            }, [chores]);
+            }, [asks]);
+
+            // Open custom modal instead of blocked window.confirm
+            const handlePayout = (kidName) => {
+                const stats = currentEarnings[kidName];
+                setPayoutConfirmData({ kidName, stats });
+            };
+
+            // Actually execute the payout
+            const executePayout = async () => {
+                if (!payoutConfirmData) return;
+                const { kidName, stats } = payoutConfirmData;
+                setPayoutConfirmData(null); // close modal
+                
+                try {
+                    if (typeof confetti === 'function') {
+                        confetti({
+                            particleCount: 150,
+                            spread: 80,
+                            origin: { y: 0.6 }
+                        });
+                    }
+                } catch(e) { console.log("Confetti skipped"); }
+                
+                playCoinSound();
+
+                const unpaidAsks = asks.filter(a => a.kid === kidName && !a.isPaid);
+                const currentUid = user?.uid || 'public-user';
+
+                const batch = db.batch();
+                
+                // Mark asks as paid
+                unpaidAsks.forEach(a => {
+                    const ref = db.collection('asks').doc(a.id);
+                    batch.update(ref, { isPaid: true });
+                });
+
+                // Create payout record
+                const payoutRef = db.collection('payouts').doc();
+                batch.set(payoutRef, {
+                    userId: currentUid,
+                    kid: kidName,
+                    amountEarned: stats.earned,
+                    amountCash: stats.cash,
+                    amountSavings: stats.savings,
+                    asksCount: unpaidAsks.length,
+                    noCount: stats.noCount,
+                    yesCount: stats.yesCount,
+                    bonusAmount: stats.bonus,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                try {
+                    await batch.commit();
+                } catch (error) {
+                    console.error("Payout processing error: ", error);
+                }
+            };
 
             // Combine History
             const combinedHistory = React.useMemo(() => {
-                const completedChores = chores.filter(c => c.isDone).map(c => ({...c, type: 'chore'}));
-                const respItems = responsibilities.map(r => ({...r, type: 'resp'}));
-                const combined = [...completedChores, ...respItems];
-                return combined.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-            }, [chores, responsibilities]);
+                const formattedAsks = asks.map(a => ({
+                    ...a, 
+                    type: 'ask',
+                    sortTime: a.createdAt?.seconds || 0
+                }));
+                const formattedResp = responsibilities.map(r => ({
+                    ...r, 
+                    type: 'resp',
+                    sortTime: r.createdAt?.seconds || 0
+                }));
+                const formattedPayouts = payouts.map(p => ({
+                    ...p,
+                    type: 'payout',
+                    sortTime: p.createdAt?.seconds || 0
+                }));
+
+                const combined = [...formattedAsks, ...formattedResp, ...formattedPayouts];
+                return combined.sort((a, b) => b.sortTime - a.sortTime);
+            }, [asks, responsibilities, payouts]);
 
             return (
                 <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans text-slate-800 dark:text-slate-100 tap-highlight-transparent transition-colors duration-300">
@@ -516,7 +600,7 @@
                                 <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">Earning Engine</h1>
                             </div>
                             
-                            {(activeTab === 'chores' || activeTab === 'responsibility') && (
+                            {(activeTab === 'asks' || activeTab === 'responsibility') && (
                                 <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
                                     {KIDS.map(kid => (
                                         <button
@@ -538,65 +622,57 @@
 
                     <div className="max-w-md mx-auto px-4 pt-6">
                         
-                        {/* CHORES TAB */}
-                        {activeTab === 'chores' && (
+                        {/* ASKS TAB */}
+                        {activeTab === 'asks' && (
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200">{activeKid}'s Chores</h2>
-                                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${currentKidData.color}`}>
-                                        Owed: ${earnings.current[activeKid].toFixed(2)}
-                                    </span>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200">{activeKid}'s Responses</h2>
                                 </div>
 
-                                {filteredChores.filter(c => !c.isPaid).length === 0 && (
+                                {filteredAsks.length === 0 && (
                                     <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 transition-colors duration-300">
-                                        <p className="text-slate-400 dark:text-slate-500">No active chores!</p>
-                                        <button 
-                                            onClick={() => setIsAddChoreOpen(true)}
-                                            className="mt-2 text-sm font-bold text-blue-500 hover:underline"
-                                        >
-                                            Add the first chore
-                                        </button>
+                                        <div className="text-4xl mb-2">💬</div>
+                                        <p className="text-slate-500 dark:text-slate-400 font-medium">No asks logged this week.</p>
+                                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Tap below to log a response.</p>
                                     </div>
                                 )}
 
                                 <div className="space-y-3">
-                                    {filteredChores.filter(c => !c.isPaid).map(chore => (
+                                    {filteredAsks.map(ask => (
                                         <div 
-                                            key={chore.id} 
+                                            key={ask.id} 
                                             className={`flex items-center p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border transition-all duration-300 ${
-                                                chore.isDone 
-                                                    ? 'border-green-100 bg-green-50/50 dark:bg-green-900/20 dark:border-green-900/50' 
-                                                    : 'border-slate-100 dark:border-slate-700'
+                                                ask.response === 'yes' 
+                                                    ? 'border-green-100 dark:border-green-900/50 border-l-4 border-l-green-500' 
+                                                    : 'border-red-100 dark:border-red-900/50 border-l-4 border-l-red-500'
                                             }`}
                                         >
-                                            <button 
-                                                onClick={() => toggleChore(chore)}
-                                                className="flex-shrink-0 mr-4 transition-transform active:scale-95 touch-manipulation"
-                                            >
-                                                {chore.isDone ? (
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentKidData.check}`}>
-                                                        <Icon name="checkCircle" className="w-8 h-8 fill-current bg-white dark:bg-transparent rounded-full" />
+                                            <div className="flex-shrink-0 mr-4">
+                                                {ask.response === 'yes' ? (
+                                                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
+                                                        <Icon name="thumbsUp" className="w-5 h-5" />
                                                     </div>
                                                 ) : (
-                                                    <Icon name="circle" className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                                                )}
-                                            </button>
-                                            
-                                            <div className="flex-1">
-                                                <h3 className={`font-semibold text-lg ${chore.isDone ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
-                                                    {chore.title}
-                                                </h3>
-                                                {chore.value > 0 && (
-                                                    <span className={`text-sm font-medium ${chore.isDone ? 'text-slate-400 dark:text-slate-500' : 'text-slate-500 dark:text-slate-400'}`}>
-                                                        ${chore.value.toFixed(2)}
-                                                    </span>
+                                                    <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
+                                                        <Icon name="thumbsDown" className="w-5 h-5" />
+                                                    </div>
                                                 )}
                                             </div>
+                                            
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-lg text-slate-700 dark:text-slate-200 leading-tight">
+                                                    {ask.task}
+                                                </h3>
+                                                <span className={`text-xs font-bold uppercase tracking-wider ${ask.response === 'yes' ? 'text-green-500' : 'text-red-500'}`}>
+                                                    Said {ask.response}
+                                                </span>
+                                            </div>
 
+                                            {/* UNDO BUTTON: Tapping trash acts as undo by deleting the mistake */}
                                             <button 
-                                                onClick={() => deleteChore(chore.id)}
-                                                className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors"
+                                                onClick={() => deleteAsk(ask.id)}
+                                                className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors ml-2"
+                                                title="Undo / Delete"
                                             >
                                                 <Icon name="trash" className="w-5 h-5" />
                                             </button>
@@ -605,8 +681,8 @@
                                 </div>
                                 
                                 <button
-                                    onClick={() => setIsAddChoreOpen(true)}
-                                    className={`fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 ${currentKidData.btn}`}
+                                    onClick={() => setIsAddAskOpen(true)}
+                                    className={`fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 ${currentKidData.btn}`}
                                 >
                                     <Icon name="plus" className="w-8 h-8" />
                                 </button>
@@ -617,7 +693,7 @@
                         {activeTab === 'responsibility' && (
                             <div className="space-y-6">
                                 <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
-                                    <h2 className="text-slate-500 dark:text-slate-400 font-medium mb-2">Checkmarks for {activeKid}</h2>
+                                    <h2 className="text-slate-500 dark:text-slate-400 font-medium mb-2">Bonus Stars for {activeKid}</h2>
                                     <div className="flex items-end gap-2 text-6xl font-black text-slate-800 dark:text-white tracking-tighter">
                                         {totalStars}
                                         <Icon name="star" className="w-12 h-12 mb-2 fill-yellow-400 text-yellow-500" />
@@ -648,6 +724,7 @@
                                             <button 
                                                 onClick={() => deleteResponsibility(resp.id)}
                                                 className="text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 self-start"
+                                                title="Undo / Delete"
                                             >
                                                 <Icon name="trash" className="w-4 h-4" />
                                             </button>
@@ -660,54 +737,74 @@
                         {/* MONEY TAB */}
                         {activeTab === 'money' && (
                             <div className="space-y-6">
-                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-6">Unpaid Balance</h2>
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-4">Weekly Earnings</h2>
                                 
-                                <div className="grid gap-4">
+                                <div className="grid gap-6">
                                     {KIDS.map((kid) => {
-                                        const amount = earnings.current[kid.name];
-                                        const isLeader = Math.max(...Object.values(earnings.current)) === amount && amount > 0;
+                                        const stats = currentEarnings[kid.name];
+                                        const isLeader = stats.earned > 0 && stats.earned === Math.max(...Object.values(currentEarnings).map(s => s.earned));
                                         
                                         return (
-                                            <div key={kid.name} className={`relative overflow-hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border-2 transition-all duration-300 ${isLeader ? 'border-yellow-400 ring-4 ring-yellow-400/10 dark:ring-yellow-400/5' : 'border-slate-100 dark:border-slate-700'}`}>
-                                                {isLeader && (
-                                                    <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-bl-xl text-xs font-bold flex items-center gap-1">
-                                                        <Icon name="trophy" className="w-3 h-3" /> LEADER
-                                                    </div>
-                                                )}
-                                                <div className="flex justify-between items-center">
+                                            <div key={kid.name} className={`relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border-2 transition-all duration-300 ${isLeader ? 'border-yellow-400 ring-4 ring-yellow-400/10 dark:ring-yellow-400/5' : 'border-slate-100 dark:border-slate-700'}`}>
+                                                
+                                                <div className="flex justify-between items-center mb-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${kid.color}`}>
                                                             {kid.name[0]}
                                                         </div>
                                                         <div>
                                                             <h3 className="font-bold text-slate-700 dark:text-slate-200 text-lg">{kid.name}</h3>
-                                                            <p className="text-sm text-slate-400 dark:text-slate-500">Current Balance</p>
+                                                            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">Age {kid.age}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <div className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
-                                                            ${amount.toFixed(2)}
+                                                    <div className="text-right">
+                                                        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Total Earned</div>
+                                                        <div className="text-3xl font-black text-green-500 tracking-tight">
+                                                            ${stats.earned.toFixed(2)}
                                                         </div>
-                                                        {amount > 0 && (
-                                                            <button 
-                                                                onClick={() => handlePayout(kid.name, amount)}
-                                                                className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-sm active:scale-95 transition-transform"
-                                                            >
-                                                                Pay Out
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
+
+                                                {/* Stacked Breakdown */}
+                                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 mb-4 space-y-2 text-sm">
+                                                    <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                                                        <span>Base Allowance:</span>
+                                                        <span className="font-semibold">${stats.base.toFixed(2)}</span>
+                                                    </div>
+                                                    {stats.noCount > 0 && (
+                                                        <div className="flex justify-between text-red-500">
+                                                            <span>Deductions ({stats.noCount} "No"s):</span>
+                                                            <span className="font-semibold">-${stats.deductions.toFixed(2)}</span>
+                                                        </div>
+                                                    )}
+                                                    {stats.yesCount > 0 && (
+                                                        <div className="flex justify-between text-green-500">
+                                                            <span>"Yes" Bonus ({stats.yesCount}):</span>
+                                                            <span className="font-semibold">+${stats.bonus.toFixed(2)}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex gap-2 mb-4">
+                                                    <div className="flex-1 bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl border border-blue-100 dark:border-blue-800/50 text-center">
+                                                        <div className="text-[10px] uppercase tracking-wider font-bold text-blue-500 mb-1">Cash (50%)</div>
+                                                        <div className="text-xl font-black text-blue-700 dark:text-blue-300">${stats.cash.toFixed(2)}</div>
+                                                    </div>
+                                                    <div className="flex-1 bg-purple-50 dark:bg-purple-900/30 p-3 rounded-xl border border-purple-100 dark:border-purple-800/50 text-center">
+                                                        <div className="text-[10px] uppercase tracking-wider font-bold text-purple-500 mb-1">Savings (50%)</div>
+                                                        <div className="text-xl font-black text-purple-700 dark:text-purple-300">${stats.savings.toFixed(2)}</div>
+                                                    </div>
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => handlePayout(kid.name)}
+                                                    className="w-full py-3 bg-green-500 text-white font-bold rounded-xl shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
+                                                >
+                                                    <Icon name="wallet" className="w-5 h-5" /> Process Weekly Payout
+                                                </button>
                                             </div>
                                         );
                                     })}
-                                </div>
-                                
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-blue-800 dark:text-blue-200 text-sm border border-blue-100 dark:border-blue-800/30 mt-8">
-                                    <p className="flex gap-2">
-                                        <Icon name="dollar" className="w-5 h-5 flex-shrink-0" />
-                                        <span>Clicking "Pay Out" will mark current chores as paid and reset the balance to $0.00.</span>
-                                    </p>
                                 </div>
                             </div>
                         )}
@@ -715,63 +812,98 @@
                         {/* HISTORY TAB */}
                         {activeTab === 'history' && (
                             <div className="space-y-6">
-                                {/* Lifetime Stats */}
-                                <div className="grid grid-cols-3 gap-2">
-                                    {KIDS.map(kid => (
-                                        <div key={kid.name} className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center transition-colors duration-300">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${kid.color}`}>
-                                                {kid.name[0]}
-                                            </div>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">All Time</span>
-                                            <span className="text-lg font-bold text-slate-700 dark:text-slate-200">${earnings.lifetime[kid.name].toFixed(0)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
                                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm transition-colors duration-300">
                                     <div className="p-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
                                         <Icon name="history" className="w-5 h-5 text-slate-400" />
-                                        <h3 className="font-bold text-slate-700 dark:text-slate-200">Recent Activity</h3>
+                                        <h3 className="font-bold text-slate-700 dark:text-slate-200">Activity Timeline</h3>
                                     </div>
                                     <div className="divide-y divide-slate-100 dark:divide-slate-700">
-                                        {combinedHistory.slice(0, 30).map(item => {
+                                        {combinedHistory.slice(0, 50).map(item => {
                                             const k = KIDS.find(kid => kid.name === item.kid) || KIDS[0];
-                                            const isChore = item.type === 'chore';
+                                            const dateStr = item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'}) : 'Just now';
                                             
-                                            return (
-                                                <div key={item.id} className="p-4 flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${k.color}`}>
-                                                            {k.name[0]}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm line-clamp-1">
-                                                                {isChore ? item.title : item.note}
+                                            // RENDER PAYOUT
+                                            if (item.type === 'payout') {
+                                                return (
+                                                    <div key={item.id} className="p-4 bg-green-50/50 dark:bg-green-900/10 flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
+                                                                <Icon name="wallet" className="w-4 h-4" />
                                                             </div>
-                                                            <div className="text-xs text-slate-400 dark:text-slate-500">
-                                                                {item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right flex-shrink-0 ml-2">
-                                                        {isChore ? (
-                                                            <>
-                                                                <div className="font-bold text-slate-700 dark:text-slate-200">${item.value.toFixed(2)}</div>
-                                                                {item.isPaid ? (
-                                                                    <span className="text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">PAID</span>
-                                                                ) : (
-                                                                    <span className="text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">PENDING</span>
+                                                            <div>
+                                                                <div className="font-bold text-green-800 dark:text-green-300 text-sm">Weekly Payout: {item.kid}</div>
+                                                                <div className="text-xs text-green-600 dark:text-green-500 font-medium">
+                                                                    Cash: ${item.amountCash?.toFixed(2) || '0.00'} | Savings: ${item.amountSavings?.toFixed(2) || '0.00'}
+                                                                </div>
+                                                                {item.bonusAmount > 0 && (
+                                                                    <div className="text-[10px] text-green-600 dark:text-green-400 font-bold mt-0.5">
+                                                                        + ${item.bonusAmount.toFixed(2)} 'Yes' Bonus
+                                                                    </div>
                                                                 )}
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex items-center justify-end gap-1 text-yellow-500 font-bold">
-                                                                <span>{item.value || 1}</span>
-                                                                <Icon name="star" className="w-4 h-4 fill-current" />
+                                                                <div className="text-[10px] text-slate-400 mt-0.5">{dateStr}</div>
                                                             </div>
-                                                        )}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="font-black text-green-600 dark:text-green-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            );
+                                                );
+                                            }
+
+                                            // RENDER ASK
+                                            if (item.type === 'ask') {
+                                                return (
+                                                    <div key={item.id} className="p-4 flex items-center justify-between">
+                                                        <div className="flex items-center gap-3 max-w-[70%]">
+                                                            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${k.color}`}>
+                                                                {k.name[0]}
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm truncate">
+                                                                    {item.task}
+                                                                </div>
+                                                                <div className="text-xs text-slate-400 dark:text-slate-500">{dateStr}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex-shrink-0 ml-2">
+                                                            {item.response === 'yes' ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
+                                                                    <Icon name="thumbsUp" className="w-3 h-3" /> YES
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-1 rounded-full">
+                                                                    <Icon name="thumbsDown" className="w-3 h-3" /> NO
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+
+                                            // RENDER RESP (STARS)
+                                            if (item.type === 'resp') {
+                                                return (
+                                                    <div key={item.id} className="p-4 flex items-center justify-between">
+                                                        <div className="flex items-center gap-3 max-w-[70%]">
+                                                            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${k.color}`}>
+                                                                {k.name[0]}
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm truncate">
+                                                                    {item.note}
+                                                                </div>
+                                                                <div className="text-xs text-slate-400 dark:text-slate-500">{dateStr}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex-shrink-0 ml-2">
+                                                            <div className="flex items-center justify-end gap-1 text-yellow-500 font-bold bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full">
+                                                                <span className="text-xs">{item.value || 1}</span>
+                                                                <Icon name="star" className="w-3 h-3 fill-current" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
                                         })}
                                         {combinedHistory.length === 0 && (
                                             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No history yet</div>
@@ -814,33 +946,32 @@
                         </div>
                     )}
                     
-                    {/* Add Chore */}
-                    {isAddChoreOpen && (
+                    {/* Add Ask Modal */}
+                    {isAddAskOpen && (
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-                            <form 
-                                onSubmit={handleAddChore}
-                                className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh] transition-colors duration-300 overflow-hidden"
-                            >
+                            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh] transition-colors duration-300 overflow-hidden">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold dark:text-white">New Chore for {activeKid}</h3>
-                                    <button type="button" onClick={() => setIsAddChoreOpen(false)}>
+                                    <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
+                                        <Icon name="message" className="w-5 h-5 text-blue-500" /> New Ask for {activeKid}
+                                    </h3>
+                                    <button type="button" onClick={() => setIsAddAskOpen(false)}>
                                         <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                                     </button>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto min-h-0">
-                                    {choreTemplates.length > 0 && (
+                                    {askTemplates.length > 0 && (
                                         <div className="mb-6">
                                             <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                                <Icon name="library" className="w-3 h-3" /> Saved Chores
+                                                <Icon name="library" className="w-3 h-3" /> Saved Asks
                                             </div>
                                             <div className="border border-slate-200 dark:border-slate-600 rounded-xl max-h-32 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
-                                                {choreTemplates.map(tpl => (
-                                                    <div key={tpl.id} className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" onClick={() => selectTemplate(tpl)}>
+                                                {askTemplates.map(tpl => (
+                                                    <div key={tpl.id} className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" onClick={() => selectAskTemplate(tpl)}>
                                                        <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-2">
-                                                          {tpl.title} <span className="opacity-50 text-xs ml-1">${tpl.defaultValue}</span>
+                                                          {tpl.task}
                                                        </div>
-                                                       <button onClick={(e) => deleteTemplate(tpl.id, e)} className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0">
+                                                       <button onClick={(e) => deleteAskTemplate(tpl.id, e)} className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0">
                                                           <Icon name="x" className="w-4 h-4" />
                                                        </button>
                                                     </div>
@@ -851,51 +982,53 @@
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Task Name</label>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">What did you ask them to do?</label>
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                placeholder="e.g. Clean Room"
-                                                value={newChoreTitle}
-                                                onChange={e => setNewChoreTitle(e.target.value)}
-                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Value ($)</label>
-                                            <input
-                                                type="number"
-                                                step="0.25"
-                                                placeholder="0.00"
-                                                value={newChoreValue}
-                                                onChange={e => setNewChoreValue(e.target.value)}
+                                                placeholder="e.g. Put shoes away"
+                                                value={newAskTask}
+                                                onChange={e => setNewAskTask(e.target.value)}
                                                 className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                             />
                                         </div>
                                         <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
                                             <input 
                                                 type="checkbox"
-                                                id="saveTemplate"
-                                                checked={saveAsTemplate}
-                                                onChange={e => setSaveAsTemplate(e.target.checked)}
+                                                id="saveAskTemplate"
+                                                checked={saveAskAsTemplate}
+                                                onChange={e => setSaveAskAsTemplate(e.target.checked)}
                                                 className="w-5 h-5 rounded text-blue-500"
                                             />
-                                            <label htmlFor="saveTemplate" className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
+                                            <label htmlFor="saveAskTemplate" className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
                                                 <Icon name="save" className="w-4 h-4" /> Save to Library
                                             </label>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
-                                    <button type="button" onClick={() => setIsAddChoreOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                                    <button type="submit" className={`flex-1 py-3 font-bold text-white rounded-xl ${currentKidData.btn}`}>Add Chore</button>
+                                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+                                    <p className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">How did they respond?</p>
+                                    <div className="flex gap-3">
+                                        <button 
+                                            onClick={() => handleAddAsk('no')} 
+                                            className="flex-1 py-4 font-black text-red-700 bg-red-100 border-2 border-red-200 rounded-xl hover:bg-red-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                        >
+                                            <Icon name="thumbsDown" className="w-6 h-6" /> NO
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddAsk('yes')} 
+                                            className="flex-1 py-4 font-black text-green-700 bg-green-100 border-2 border-green-200 rounded-xl hover:bg-green-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                        >
+                                            <Icon name="thumbsUp" className="w-6 h-6" /> YES
+                                        </button>
+                                    </div>
                                 </div>
-                            </form>
+                            </div>
                         </div>
                     )}
 
-                    {/* Add Resp */}
+                    {/* Add Resp Modal */}
                     {isAddRespOpen && (
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
                             <form 
@@ -904,7 +1037,7 @@
                             >
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
-                                        <Icon name="star" className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Add Checkmark
+                                        <Icon name="star" className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Add Bonus Star
                                     </h3>
                                     <button type="button" onClick={() => setIsAddRespOpen(false)}>
                                         <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -945,7 +1078,7 @@
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Star Value (1-5)</label>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Star Value (1-10)</label>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -979,11 +1112,54 @@
                         </div>
                     )}
 
+                    {/* Custom Payout Confirm Modal */}
+                    {payoutConfirmData && (
+                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+                            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl transition-colors duration-300">
+                                <h3 className="text-xl font-bold dark:text-white mb-2 flex items-center gap-2">
+                                    <Icon name="wallet" className="w-6 h-6 text-green-500" /> Confirm Payout
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                    Process Weekly Payout for <strong>{payoutConfirmData.kidName}</strong>?
+                                </p>
+                                
+                                <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6 space-y-2 text-sm">
+                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
+                                        <span>Total Earned:</span>
+                                        <span className="font-bold text-green-600 dark:text-green-400">${payoutConfirmData.stats.earned.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
+                                        <span>Cash (50%):</span>
+                                        <span className="font-semibold">${payoutConfirmData.stats.cash.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
+                                        <span>Savings (50%):</span>
+                                        <span className="font-semibold">${payoutConfirmData.stats.savings.toFixed(2)}</span>
+                                    </div>
+                                    
+                                    {payoutConfirmData.stats.bonus > 0 && (
+                                        <div className="flex justify-between text-green-500 pt-2 border-t border-slate-200 dark:border-slate-600 mt-2">
+                                            <span>🎉 'Yes' Bonus included:</span>
+                                            <span className="font-semibold">+${payoutConfirmData.stats.bonus.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button onClick={() => setPayoutConfirmData(null)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                                    <button onClick={executePayout} className="flex-1 py-3 font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors flex justify-center items-center gap-2">
+                                        Pay Out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Tab Bar */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-6 py-3 pb-safe z-40 transition-colors duration-300">
                         <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
-                            <button onClick={() => setActiveTab('chores')} className={`flex flex-col items-center gap-1 ${activeTab === 'chores' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                                <Icon name="list" className="w-6 h-6" /> <span className="text-[10px] font-medium">Chores</span>
+                            <button onClick={() => setActiveTab('asks')} className={`flex flex-col items-center gap-1 ${activeTab === 'asks' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                                <Icon name="message" className="w-6 h-6" /> <span className="text-[10px] font-medium">Asks</span>
                             </button>
                             <button onClick={() => setActiveTab('responsibility')} className={`flex flex-col items-center gap-1 ${activeTab === 'responsibility' ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                 <Icon name="award" className="w-6 h-6" /> <span className="text-[10px] font-medium">Stars</span>
@@ -1005,5 +1181,6 @@
     </script>
 </body>
 </html>
+
 
 
