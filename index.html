@@ -202,21 +202,14 @@
             
             // Data State
             const [asks, setAsks] = React.useState([]); 
-            const [responsibilities, setResponsibilities] = React.useState([]);
             const [payouts, setPayouts] = React.useState([]);
             const [askTemplates, setAskTemplates] = React.useState([]);
-            const [respTemplates, setRespTemplates] = React.useState([]);
             const [savingsTx, setSavingsTx] = React.useState([]); // New state for Bank
             
             // UI State
             const [isAddAskOpen, setIsAddAskOpen] = React.useState(false);
             const [newAskTask, setNewAskTask] = React.useState('');
             const [saveAskAsTemplate, setSaveAskAsTemplate] = React.useState(false);
-
-            const [isAddRespOpen, setIsAddRespOpen] = React.useState(false);
-            const [newRespNote, setNewRespNote] = React.useState('');
-            const [newRespValue, setNewRespValue] = React.useState(1);
-            const [saveRespAsTemplate, setSaveRespAsTemplate] = React.useState(false);
             
             const [payoutConfirmData, setPayoutConfirmData] = React.useState(null);
 
@@ -280,10 +273,6 @@
                     setAsks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 }, handleError);
 
-                const unsubscribeResp = db.collection('responsibilities').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-                    setResponsibilities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                }, handleError);
-
                 const unsubscribePayouts = db.collection('payouts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                     setPayouts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 }, handleError);
@@ -299,19 +288,11 @@
                     setAskTemplates(data);
                 }, handleError);
 
-                const unsubscribeRespTpl = db.collection('responsibility_templates').onSnapshot(snapshot => {
-                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    data.sort((a,b) => a.note.localeCompare(b.note));
-                    setRespTemplates(data);
-                }, handleError);
-
                 return () => {
                     unsubscribeAsks();
-                    unsubscribeResp();
                     unsubscribePayouts();
                     unsubscribeSavings();
                     unsubscribeAskTpl();
-                    unsubscribeRespTpl();
                 };
             }, [user]);
 
@@ -355,51 +336,6 @@
             const selectAskTemplate = (tpl) => {
                 setNewAskTask(tpl.task);
                 setSaveAskAsTemplate(false);
-            };
-
-            // --- Handlers: Responsibilities ---
-            const handleAddResponsibility = async (e) => {
-                e.preventDefault();
-                if (!newRespNote.trim()) return;
-                const currentUid = user?.uid || 'public-user';
-                const starVal = parseInt(newRespValue) || 1;
-                try {
-                    await db.collection('responsibilities').add({
-                        userId: currentUid,
-                        note: newRespNote,
-                        kid: activeKid,
-                        value: starVal,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    if (saveRespAsTemplate) {
-                         const exists = respTemplates.some(t => t.note.toLowerCase() === newRespNote.toLowerCase());
-                         if (!exists) {
-                             await db.collection('responsibility_templates').add({ userId: currentUid, note: newRespNote, defaultValue: starVal });
-                         }
-                    }
-                    playSuccessSound();
-                    setNewRespNote('');
-                    setNewRespValue(1);
-                    setSaveRespAsTemplate(false);
-                    setIsAddRespOpen(false);
-                } catch (error) {
-                    if (error.code === 'permission-denied') setPermissionError(true);
-                }
-            };
-
-            const deleteResponsibility = async (id) => {
-                try { await db.collection('responsibilities').doc(id).delete(); } catch (error) { if (error.code === 'permission-denied') setPermissionError(true); }
-            };
-
-            const deleteRespTemplate = async (id, e) => {
-                e.stopPropagation();
-                try { await db.collection('responsibility_templates').doc(id).delete(); } catch (error) { if (error.code === 'permission-denied') setPermissionError(true); }
-            };
-
-            const selectRespTemplate = (tpl) => {
-                setNewRespNote(tpl.note);
-                setNewRespValue(tpl.defaultValue || 1);
-                setSaveRespAsTemplate(false);
             };
 
             // --- Handlers: Bank Transactions ---
@@ -447,8 +383,6 @@
             // --- Calculations ---
             const currentKidData = KIDS.find(k => k.name === activeKid) || KIDS[0];
             const filteredAsks = asks.filter(a => a.kid === activeKid && !a.isPaid);
-            const filteredResp = responsibilities.filter(r => r.kid === activeKid);
-            const totalStars = filteredResp.reduce((acc, curr) => acc + (curr.value || 1), 0);
 
             // Bank Calculations
             const bankStats = React.useMemo(() => {
@@ -581,12 +515,11 @@
             // Combine History for Main History Tab (Everything)
             const combinedHistory = React.useMemo(() => {
                 const formattedAsks = asks.map(a => ({ ...a, type: 'ask', sortTime: a.createdAt?.seconds || 0 }));
-                const formattedResp = responsibilities.map(r => ({ ...r, type: 'resp', sortTime: r.createdAt?.seconds || 0 }));
                 const formattedPayouts = payouts.map(p => ({ ...p, type: 'payout', sortTime: p.createdAt?.seconds || 0 }));
                 const formattedSavings = savingsTx.map(t => ({ ...t, type: 'savingstx', sortTime: t.createdAt?.seconds || 0 }));
 
-                return [...formattedAsks, ...formattedResp, ...formattedPayouts, ...formattedSavings].sort((a, b) => b.sortTime - a.sortTime);
-            }, [asks, responsibilities, payouts, savingsTx]);
+                return [...formattedAsks, ...formattedPayouts, ...formattedSavings].sort((a, b) => b.sortTime - a.sortTime);
+            }, [asks, payouts, savingsTx]);
 
             return (
                 <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans text-slate-800 dark:text-slate-100 tap-highlight-transparent transition-colors duration-300">
@@ -602,7 +535,7 @@
                                 <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">Earning Engine</h1>
                             </div>
                             
-                            {(activeTab === 'asks' || activeTab === 'responsibility' || activeTab === 'bank') && (
+                            {(activeTab === 'asks' || activeTab === 'bank') && (
                                 <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
                                     {KIDS.map(kid => (
                                         <button
@@ -687,51 +620,6 @@
                                 >
                                     <Icon name="plus" className="w-8 h-8" />
                                 </button>
-                            </div>
-                        )}
-
-                        {/* RESPONSIBILITY TAB */}
-                        {activeTab === 'responsibility' && (
-                            <div className="space-y-6">
-                                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
-                                    <h2 className="text-slate-500 dark:text-slate-400 font-medium mb-2">Bonus Stars for {activeKid}</h2>
-                                    <div className="flex items-end gap-2 text-6xl font-black text-slate-800 dark:text-white tracking-tighter">
-                                        {totalStars}
-                                        <Icon name="star" className="w-12 h-12 mb-2 fill-yellow-400 text-yellow-500" />
-                                    </div>
-                                    <button 
-                                        onClick={() => setIsAddRespOpen(true)}
-                                        className={`mt-6 px-6 py-2 rounded-full font-bold text-white shadow-md transition-transform active:scale-95 ${currentKidData.btn}`}
-                                    >
-                                        + Add Checkmark
-                                    </button>
-                                </div>
-
-                                <div className="space-y-3">
-                                    {filteredResp.map(resp => (
-                                        <div key={resp.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex gap-3 transition-colors duration-300">
-                                            <div className="mt-1 flex flex-col items-center gap-1 min-w-[3rem]">
-                                                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-1.5 rounded-full h-fit">
-                                                    <Icon name="star" className="w-4 h-4 text-yellow-600 dark:text-yellow-500 fill-yellow-600 dark:fill-yellow-500" />
-                                                </div>
-                                                <span className="text-xs font-bold text-yellow-600 dark:text-yellow-500">x{resp.value || 1}</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-slate-700 dark:text-slate-200 font-medium">{resp.note}</p>
-                                                <p className="text-xs text-slate-400 mt-1">
-                                                    {resp.createdAt ? new Date(resp.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
-                                                </p>
-                                            </div>
-                                            <button 
-                                                onClick={() => deleteResponsibility(resp.id)}
-                                                className="text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 self-start"
-                                                title="Undo / Delete"
-                                            >
-                                                <Icon name="trash" className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         )}
 
@@ -986,31 +874,6 @@
                                                     </div>
                                                 );
                                             }
-
-                                            // RENDER RESP (STARS)
-                                            if (item.type === 'resp') {
-                                                return (
-                                                    <div key={item.id} className="p-4 flex items-center justify-between">
-                                                        <div className="flex items-center gap-3 max-w-[70%]">
-                                                            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${k.color}`}>
-                                                                {k.name[0]}
-                                                            </div>
-                                                            <div className="overflow-hidden">
-                                                                <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm truncate">
-                                                                    {item.note}
-                                                                </div>
-                                                                <div className="text-xs text-slate-400 dark:text-slate-500">{dateStr}</div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right flex-shrink-0 ml-2">
-                                                            <div className="flex items-center justify-end gap-1 text-yellow-500 font-bold bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full">
-                                                                <span className="text-xs">{item.value || 1}</span>
-                                                                <Icon name="star" className="w-3 h-3 fill-current" />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            }
                                         })}
                                         {combinedHistory.length === 0 && (
                                             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No history yet</div>
@@ -1053,275 +916,11 @@
                         </div>
                     )}
 
-                    {/* Bank Withdrawal/Bonus Modal */}
-                    {isSavingsModalOpen && (
-                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-4">
-                            <form 
-                                onSubmit={handleSavingsSubmit}
-                                className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl transition-colors duration-300"
-                            >
-                                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${savingsModalType === 'deposit' ? 'text-purple-600 dark:text-purple-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    <Icon name={savingsModalType === 'deposit' ? 'arrowUp' : 'arrowDown'} className="w-6 h-6" /> 
-                                    {savingsModalType === 'deposit' ? 'Add Bonus Match' : 'Withdraw Funds'}
-                                </h3>
-                                
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Amount ($)</label>
-                                        <input
-                                            autoFocus
-                                            type="number"
-                                            step="0.01"
-                                            min="0.01"
-                                            placeholder="0.00"
-                                            value={savingsAmount}
-                                            onChange={e => setSavingsAmount(e.target.value)}
-                                            className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                            {savingsModalType === 'deposit' ? 'Note (e.g., 10% Monthly Match)' : 'What did they buy?'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="..."
-                                            value={savingsNote}
-                                            onChange={e => setSavingsNote(e.target.value)}
-                                            className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
-                                    <button type="button" onClick={() => setIsSavingsModalOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                                    <button type="submit" className={`flex-1 py-3 font-bold text-white rounded-xl transition-colors ${savingsModalType === 'deposit' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-red-600 hover:bg-red-700'}`}>
-                                        Confirm
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
-                    
-                    {/* Custom Payout Confirm Modal */}
-                    {payoutConfirmData && (
-                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-                            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl transition-colors duration-300">
-                                <h3 className="text-xl font-bold dark:text-white mb-2 flex items-center gap-2">
-                                    <Icon name="wallet" className="w-6 h-6 text-green-500" /> Confirm Payout
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-300 mb-4">
-                                    Process Weekly Payout for <strong>{payoutConfirmData.kidName}</strong>?
-                                </p>
-                                
-                                <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6 space-y-2 text-sm">
-                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
-                                        <span>Total Earned:</span>
-                                        <span className="font-bold text-green-600 dark:text-green-400">${payoutConfirmData.stats.earned.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
-                                        <span>Spending Cash:</span>
-                                        <span className="font-semibold">${payoutConfirmData.stats.cash.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
-                                        <span>Fixed Savings:</span>
-                                        <span className="font-semibold text-purple-600 dark:text-purple-400">+${payoutConfirmData.stats.savings.toFixed(2)} to Bank</span>
-                                    </div>
-                                    
-                                    {payoutConfirmData.stats.bonus > 0 && (
-                                        <div className="flex justify-between text-green-500 pt-2 border-t border-slate-200 dark:border-slate-600 mt-2">
-                                            <span>🎉 'Yes' Bonus (To Cash):</span>
-                                            <span className="font-semibold">+${payoutConfirmData.stats.bonus.toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button onClick={() => setPayoutConfirmData(null)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                                    <button onClick={executePayout} className="flex-1 py-3 font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors flex justify-center items-center gap-2">
-                                        Pay Out
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Add Ask Modal */}
-                    {isAddAskOpen && (
-                        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-                            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh] transition-colors duration-300 overflow-hidden">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
-                                        <Icon name="message" className="w-5 h-5 text-blue-500" /> New Ask for {activeKid}
-                                    </h3>
-                                    <button type="button" onClick={() => setIsAddAskOpen(false)}>
-                                        <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                                    </button>
-                                </div>
-
-                                <div className="flex-1 overflow-y-auto min-h-0">
-                                    {askTemplates.length > 0 && (
-                                        <div className="mb-6">
-                                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                                <Icon name="library" className="w-3 h-3" /> Saved Asks
-                                            </div>
-                                            <div className="border border-slate-200 dark:border-slate-600 rounded-xl max-h-32 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
-                                                {askTemplates.map(tpl => (
-                                                    <div key={tpl.id} className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" onClick={() => selectAskTemplate(tpl)}>
-                                                       <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-2">
-                                                          {tpl.task}
-                                                       </div>
-                                                       <button onClick={(e) => deleteAskTemplate(tpl.id, e)} className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0">
-                                                          <Icon name="x" className="w-4 h-4" />
-                                                       </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">What did you ask them to do?</label>
-                                            <input
-                                                autoFocus
-                                                type="text"
-                                                placeholder="e.g. Put shoes away"
-                                                value={newAskTask}
-                                                onChange={e => setNewAskTask(e.target.value)}
-                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
-                                            <input 
-                                                type="checkbox"
-                                                id="saveAskTemplate"
-                                                checked={saveAskAsTemplate}
-                                                onChange={e => setSaveAskAsTemplate(e.target.checked)}
-                                                className="w-5 h-5 rounded text-blue-500"
-                                            />
-                                            <label htmlFor="saveAskTemplate" className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
-                                                <Icon name="save" className="w-4 h-4" /> Save to Library
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
-                                    <p className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">How did they respond?</p>
-                                    <div className="flex gap-3">
-                                        <button 
-                                            onClick={() => handleAddAsk('no')} 
-                                            className="flex-1 py-4 font-black text-red-700 bg-red-100 border-2 border-red-200 rounded-xl hover:bg-red-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
-                                        >
-                                            <Icon name="thumbsDown" className="w-6 h-6" /> NO
-                                        </button>
-                                        <button 
-                                            onClick={() => handleAddAsk('yes')} 
-                                            className="flex-1 py-4 font-black text-green-700 bg-green-100 border-2 border-green-200 rounded-xl hover:bg-green-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
-                                        >
-                                            <Icon name="thumbsUp" className="w-6 h-6" /> YES
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Add Resp Modal */}
-                    {isAddRespOpen && (
-                        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-                            <form 
-                                onSubmit={handleAddResponsibility}
-                                className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl transition-colors duration-300 flex flex-col max-h-[85vh] overflow-hidden"
-                            >
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
-                                        <Icon name="star" className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Add Bonus Star
-                                    </h3>
-                                    <button type="button" onClick={() => setIsAddRespOpen(false)}>
-                                        <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                                    </button>
-                                </div>
-                                
-                                <div className="flex-1 overflow-y-auto min-h-0">
-                                    {respTemplates.length > 0 && (
-                                        <div className="mb-6">
-                                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                                <Icon name="library" className="w-3 h-3" /> Saved Stars
-                                            </div>
-                                            <div className="border border-slate-200 dark:border-slate-600 rounded-xl max-h-32 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
-                                                {respTemplates.map(tpl => (
-                                                    <div key={tpl.id} className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" onClick={() => selectRespTemplate(tpl)}>
-                                                       <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-2">
-                                                          {tpl.note} <span className="opacity-50 text-xs ml-1">x{tpl.defaultValue}</span>
-                                                       </div>
-                                                       <button onClick={(e) => deleteRespTemplate(tpl.id, e)} className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0">
-                                                          <Icon name="x" className="w-4 h-4" />
-                                                       </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">What did {activeKid} do?</label>
-                                            <textarea
-                                                autoFocus
-                                                rows={3}
-                                                placeholder="e.g. Helped carry in groceries..."
-                                                value={newRespNote}
-                                                onChange={e => setNewRespNote(e.target.value)}
-                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Star Value (1-10)</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="10"
-                                                step="1"
-                                                value={newRespValue}
-                                                onChange={e => setNewRespValue(e.target.value)}
-                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
-                                            <input 
-                                                type="checkbox"
-                                                id="saveRespTemplate"
-                                                checked={saveRespAsTemplate}
-                                                onChange={e => setSaveRespAsTemplate(e.target.checked)}
-                                                className="w-5 h-5 rounded text-yellow-500"
-                                            />
-                                            <label htmlFor="saveRespTemplate" className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
-                                                <Icon name="save" className="w-4 h-4" /> Save to Library
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
-                                    <button type="button" onClick={() => setIsAddRespOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                                    <button type="submit" className="flex-1 py-3 font-bold text-white bg-yellow-500 hover:bg-yellow-600 rounded-xl">Add Star</button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
-
                     {/* Tab Bar */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-2 sm:px-6 py-3 pb-safe z-40 transition-colors duration-300">
-                        <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
+                        <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
                             <button onClick={() => setActiveTab('asks')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'asks' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
                                 <Icon name="message" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Asks</span>
-                            </button>
-                            <button onClick={() => setActiveTab('responsibility')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'responsibility' ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
-                                <Icon name="award" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Stars</span>
                             </button>
                             <button onClick={() => setActiveTab('money')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'money' ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
                                 <Icon name="dollar" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Money</span>
