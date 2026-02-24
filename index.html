@@ -133,14 +133,13 @@
         // --- 3. ICONS ---
         const Icon = ({ name, className }) => {
             const icons = {
-                star: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
                 dollar: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
                 plus: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
                 trash: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
-                trophy: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
                 library: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>,
                 save: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
                 x: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+                lock: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
                 history: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
                 moon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>,
                 sun: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>,
@@ -162,11 +161,10 @@
                 name: 'Finley', 
                 age: 11,
                 allowance: 11.00, 
-                penalty: 1.00,
-                bonus: 0.50,
+                penalty: 1.00,    // Deducted per 'No'
+                bonus: 0.50,      // Earned per 'Yes'
                 color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200', 
                 border: 'border-teal-200 dark:border-teal-700', 
-                check: 'text-teal-500 dark:text-teal-400', 
                 btn: 'bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-500' 
             },
             { 
@@ -177,7 +175,6 @@
                 bonus: 0.50,
                 color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200', 
                 border: 'border-blue-200 dark:border-blue-700', 
-                check: 'text-blue-500 dark:text-blue-400', 
                 btn: 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500' 
             },
             { 
@@ -188,7 +185,6 @@
                 bonus: 0.50,
                 color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200', 
                 border: 'border-orange-200 dark:border-orange-700', 
-                check: 'text-orange-500 dark:text-orange-400', 
                 btn: 'bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500' 
             }
         ];
@@ -204,7 +200,7 @@
             const [asks, setAsks] = React.useState([]); 
             const [payouts, setPayouts] = React.useState([]);
             const [askTemplates, setAskTemplates] = React.useState([]);
-            const [savingsTx, setSavingsTx] = React.useState([]); // New state for Bank
+            const [savingsTx, setSavingsTx] = React.useState([]); 
             
             // UI State
             const [isAddAskOpen, setIsAddAskOpen] = React.useState(false);
@@ -215,7 +211,7 @@
 
             // Bank Modal State
             const [isSavingsModalOpen, setIsSavingsModalOpen] = React.useState(false);
-            const [savingsModalType, setSavingsModalType] = React.useState('withdraw'); // 'withdraw' or 'deposit'
+            const [savingsModalType, setSavingsModalType] = React.useState('withdraw'); 
             const [savingsAmount, setSavingsAmount] = React.useState('');
             const [savingsNote, setSavingsNote] = React.useState('');
 
@@ -277,7 +273,6 @@
                     setPayouts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 }, handleError);
                 
-                // Fetch Savings Transactions (Withdrawals and Manual Bonuses)
                 const unsubscribeSavings = db.collection('savings_transactions').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                     setSavingsTx(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 }, handleError);
@@ -345,7 +340,6 @@
                 if (!amt || amt <= 0) return;
                 if (!savingsNote.trim()) { alert("Please add a note for this transaction."); return; }
 
-                // Validation for withdrawals
                 if (savingsModalType === 'withdraw') {
                     const currentBalance = bankStats[activeKid]?.balance || 0;
                     if (amt > currentBalance) {
@@ -359,12 +353,11 @@
                     await db.collection('savings_transactions').add({
                         userId: currentUid,
                         kid: activeKid,
-                        type: savingsModalType, // 'withdraw' or 'deposit'
+                        type: savingsModalType, 
                         amount: amt,
                         note: savingsNote,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    
                     if (savingsModalType === 'deposit') playSuccessSound();
                     
                     setSavingsAmount('');
@@ -376,7 +369,6 @@
             };
 
             const deleteSavingsTx = async (id) => {
-                if(!confirm("Delete this bank record?")) return;
                 try { await db.collection('savings_transactions').doc(id).delete(); } catch (error) { if (error.code === 'permission-denied') setPermissionError(true); }
             };
 
@@ -389,7 +381,6 @@
                 const stats = {};
                 KIDS.forEach(k => { stats[k.name] = { balance: 0, totalSaved: 0, totalWithdrawn: 0 }; });
                 
-                // Add automated weekly payouts to savings
                 payouts.forEach(p => {
                     if (stats[p.kid] && p.amountSavings) {
                         stats[p.kid].balance += p.amountSavings;
@@ -397,7 +388,6 @@
                     }
                 });
 
-                // Add manual transactions (withdrawals and bonuses)
                 savingsTx.forEach(tx => {
                     if (stats[tx.kid]) {
                         if (tx.type === 'deposit') {
@@ -417,7 +407,6 @@
                 const totals = {};
                 KIDS.forEach(k => {
                     const kAsks = asks.filter(a => a.kid === k.name && !a.isPaid);
-                    
                     const countYes = kAsks.filter(a => a.response === 'yes').length;
                     const countNo = kAsks.filter(a => a.response === 'no').length;
                     
@@ -654,6 +643,7 @@
                                                     </div>
                                                 </div>
 
+                                                {/* Stacked Breakdown */}
                                                 <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 mb-4 space-y-2 text-sm">
                                                     <div className="flex justify-between text-slate-600 dark:text-slate-300">
                                                         <span>Base Allowance:</span>
@@ -916,6 +906,183 @@
                         </div>
                     )}
 
+                    {/* Bank Withdrawal/Bonus Modal */}
+                    {isSavingsModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-4">
+                            <form 
+                                onSubmit={handleSavingsSubmit}
+                                className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl transition-colors duration-300"
+                            >
+                                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${savingsModalType === 'deposit' ? 'text-purple-600 dark:text-purple-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    <Icon name={savingsModalType === 'deposit' ? 'arrowUp' : 'arrowDown'} className="w-6 h-6" /> 
+                                    {savingsModalType === 'deposit' ? 'Add Bonus Match' : 'Withdraw Funds'}
+                                </h3>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Amount ($)</label>
+                                        <input
+                                            autoFocus
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            placeholder="0.00"
+                                            value={savingsAmount}
+                                            onChange={e => setSavingsAmount(e.target.value)}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                            {savingsModalType === 'deposit' ? 'Note (e.g., 10% Monthly Match)' : 'What did they buy?'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="..."
+                                            value={savingsNote}
+                                            onChange={e => setSavingsNote(e.target.value)}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                    <button type="button" onClick={() => setIsSavingsModalOpen(false)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                                    <button type="submit" className={`flex-1 py-3 font-bold text-white rounded-xl transition-colors ${savingsModalType === 'deposit' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-red-600 hover:bg-red-700'}`}>
+                                        Confirm
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+                    
+                    {/* Custom Payout Confirm Modal */}
+                    {payoutConfirmData && (
+                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+                            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl transition-colors duration-300">
+                                <h3 className="text-xl font-bold dark:text-white mb-2 flex items-center gap-2">
+                                    <Icon name="wallet" className="w-6 h-6 text-green-500" /> Confirm Payout
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                    Process Weekly Payout for <strong>{payoutConfirmData.kidName}</strong>?
+                                </p>
+                                
+                                <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6 space-y-2 text-sm">
+                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
+                                        <span>Total Earned:</span>
+                                        <span className="font-bold text-green-600 dark:text-green-400">${payoutConfirmData.stats.earned.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
+                                        <span>Spending Cash:</span>
+                                        <span className="font-semibold">${payoutConfirmData.stats.cash.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-slate-700 dark:text-slate-200">
+                                        <span>Fixed Savings:</span>
+                                        <span className="font-semibold text-purple-600 dark:text-purple-400">+${payoutConfirmData.stats.savings.toFixed(2)} to Bank</span>
+                                    </div>
+                                    
+                                    {payoutConfirmData.stats.bonus > 0 && (
+                                        <div className="flex justify-between text-green-500 pt-2 border-t border-slate-200 dark:border-slate-600 mt-2">
+                                            <span>🎉 'Yes' Bonus (To Cash):</span>
+                                            <span className="font-semibold">+${payoutConfirmData.stats.bonus.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button onClick={() => setPayoutConfirmData(null)} className="flex-1 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                                    <button onClick={executePayout} className="flex-1 py-3 font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors flex justify-center items-center gap-2">
+                                        Pay Out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Add Ask Modal */}
+                    {isAddAskOpen && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+                            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh] transition-colors duration-300 overflow-hidden">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
+                                        <Icon name="message" className="w-5 h-5 text-blue-500" /> New Ask for {activeKid}
+                                    </h3>
+                                    <button type="button" onClick={() => setIsAddAskOpen(false)}>
+                                        <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                                    </button>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto min-h-0">
+                                    {askTemplates.length > 0 && (
+                                        <div className="mb-6">
+                                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                                <Icon name="library" className="w-3 h-3" /> Saved Asks
+                                            </div>
+                                            <div className="border border-slate-200 dark:border-slate-600 rounded-xl max-h-32 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
+                                                {askTemplates.map(tpl => (
+                                                    <div key={tpl.id} className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" onClick={() => selectAskTemplate(tpl)}>
+                                                       <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-2">
+                                                          {tpl.task}
+                                                       </div>
+                                                       <button onClick={(e) => deleteAskTemplate(tpl.id, e)} className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0">
+                                                          <Icon name="x" className="w-4 h-4" />
+                                                       </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">What did you ask them to do?</label>
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                placeholder="e.g. Put shoes away"
+                                                value={newAskTask}
+                                                onChange={e => setNewAskTask(e.target.value)}
+                                                className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
+                                            <input 
+                                                type="checkbox"
+                                                id="saveAskTemplate"
+                                                checked={saveAskAsTemplate}
+                                                onChange={e => setSaveAskAsTemplate(e.target.checked)}
+                                                className="w-5 h-5 rounded text-blue-500"
+                                            />
+                                            <label htmlFor="saveAskTemplate" className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
+                                                <Icon name="save" className="w-4 h-4" /> Save to Library
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+                                    <p className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">How did they respond?</p>
+                                    <div className="flex gap-3">
+                                        <button 
+                                            onClick={() => handleAddAsk('no')} 
+                                            className="flex-1 py-4 font-black text-red-700 bg-red-100 border-2 border-red-200 rounded-xl hover:bg-red-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                        >
+                                            <Icon name="thumbsDown" className="w-6 h-6" /> NO
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddAsk('yes')} 
+                                            className="flex-1 py-4 font-black text-green-700 bg-green-100 border-2 border-green-200 rounded-xl hover:bg-green-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                        >
+                                            <Icon name="thumbsUp" className="w-6 h-6" /> YES
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Tab Bar */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-2 sm:px-6 py-3 pb-safe z-40 transition-colors duration-300">
                         <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
@@ -942,3 +1109,5 @@
     </script>
 </body>
 </html>
+
+
