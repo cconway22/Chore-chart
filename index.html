@@ -200,7 +200,7 @@
             const [asks, setAsks] = React.useState([]); 
             const [payouts, setPayouts] = React.useState([]);
             const [askTemplates, setAskTemplates] = React.useState([]);
-            const [savingsTx, setSavingsTx] = React.useState([]); 
+            const [savingsTx, setSavingsTx] = React.useState([]); // New state for Bank
             
             // UI State
             const [isAddAskOpen, setIsAddAskOpen] = React.useState(false);
@@ -211,7 +211,7 @@
 
             // Bank Modal State
             const [isSavingsModalOpen, setIsSavingsModalOpen] = React.useState(false);
-            const [savingsModalType, setSavingsModalType] = React.useState('withdraw'); 
+            const [savingsModalType, setSavingsModalType] = React.useState('withdraw'); // 'withdraw' or 'deposit'
             const [savingsAmount, setSavingsAmount] = React.useState('');
             const [savingsNote, setSavingsNote] = React.useState('');
 
@@ -273,6 +273,7 @@
                     setPayouts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 }, handleError);
                 
+                // Fetch Savings Transactions (Withdrawals and Manual Bonuses)
                 const unsubscribeSavings = db.collection('savings_transactions').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                     setSavingsTx(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 }, handleError);
@@ -340,6 +341,7 @@
                 if (!amt || amt <= 0) return;
                 if (!savingsNote.trim()) { alert("Please add a note for this transaction."); return; }
 
+                // Validation for withdrawals
                 if (savingsModalType === 'withdraw') {
                     const currentBalance = bankStats[activeKid]?.balance || 0;
                     if (amt > currentBalance) {
@@ -353,7 +355,7 @@
                     await db.collection('savings_transactions').add({
                         userId: currentUid,
                         kid: activeKid,
-                        type: savingsModalType, 
+                        type: savingsModalType, // 'withdraw' or 'deposit'
                         amount: amt,
                         note: savingsNote,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -369,6 +371,7 @@
             };
 
             const deleteSavingsTx = async (id) => {
+                if(!confirm("Delete this bank record?")) return;
                 try { await db.collection('savings_transactions').doc(id).delete(); } catch (error) { if (error.code === 'permission-denied') setPermissionError(true); }
             };
 
@@ -379,20 +382,22 @@
             // Bank Calculations
             const bankStats = React.useMemo(() => {
                 const stats = {};
-                KIDS.forEach(k => { stats[k.name] = { balance: 0, totalSaved: 0, totalWithdrawn: 0 }; });
+                KIDS.forEach(k => { stats[k.name] = { balance: 0, weeklySaved: 0, bonusSaved: 0, totalWithdrawn: 0 }; });
                 
+                // Add automated weekly payouts to savings
                 payouts.forEach(p => {
                     if (stats[p.kid] && p.amountSavings) {
                         stats[p.kid].balance += p.amountSavings;
-                        stats[p.kid].totalSaved += p.amountSavings;
+                        stats[p.kid].weeklySaved += p.amountSavings; // Distinguish weekly
                     }
                 });
 
+                // Add manual transactions (withdrawals and bonuses)
                 savingsTx.forEach(tx => {
                     if (stats[tx.kid]) {
                         if (tx.type === 'deposit') {
                             stats[tx.kid].balance += tx.amount;
-                            stats[tx.kid].totalSaved += tx.amount;
+                            stats[tx.kid].bonusSaved += tx.amount; // Distinguish bonus
                         } else if (tx.type === 'withdraw') {
                             stats[tx.kid].balance -= tx.amount;
                             stats[tx.kid].totalWithdrawn += tx.amount;
@@ -407,6 +412,7 @@
                 const totals = {};
                 KIDS.forEach(k => {
                     const kAsks = asks.filter(a => a.kid === k.name && !a.isPaid);
+                    
                     const countYes = kAsks.filter(a => a.response === 'yes').length;
                     const countNo = kAsks.filter(a => a.response === 'no').length;
                     
@@ -482,11 +488,11 @@
                 const activePayouts = payouts.filter(p => p.kid === activeKid).map(p => ({
                     id: p.id,
                     sortTime: p.createdAt?.seconds || 0,
-                    note: 'Weekly Savings Deposit',
+                    note: 'Weekly Allowance (50% Save)',
                     amount: p.amountSavings,
-                    type: 'deposit',
+                    type: 'weekly',
                     icon: 'wallet',
-                    color: 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
+                    color: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
                 }));
                 const activeTx = savingsTx.filter(t => t.kid === activeKid).map(t => ({
                     id: t.id,
@@ -496,7 +502,7 @@
                     type: t.type,
                     dbRecord: true,
                     icon: t.type === 'deposit' ? 'arrowUp' : 'arrowDown',
-                    color: t.type === 'deposit' ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30' : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
+                    color: t.type === 'deposit' ? 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30' : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
                 }));
                 return [...activePayouts, ...activeTx].sort((a,b) => b.sortTime - a.sortTime);
             }, [payouts, savingsTx, activeKid]);
@@ -524,7 +530,7 @@
                                 <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">Earning Engine</h1>
                             </div>
                             
-                            {(activeTab === 'asks' || activeTab === 'bank') && (
+                            {(activeTab === 'asks' || activeTab === 'bank' || activeTab === 'history') && (
                                 <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
                                     {KIDS.map(kid => (
                                         <button
@@ -699,13 +705,17 @@
                                         ${(bankStats[activeKid]?.balance || 0).toFixed(2)}
                                     </div>
                                     
-                                    <div className="flex justify-center gap-6 mb-6 text-sm">
+                                    <div className="flex justify-center gap-4 mb-6 text-sm">
                                         <div className="text-center">
-                                            <div className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold">All-Time Saved</div>
-                                            <div className="font-semibold text-green-600 dark:text-green-400">${(bankStats[activeKid]?.totalSaved || 0).toFixed(2)}</div>
+                                            <div className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold">Weekly Saved</div>
+                                            <div className="font-semibold text-blue-600 dark:text-blue-400">${(bankStats[activeKid]?.weeklySaved || 0).toFixed(2)}</div>
+                                        </div>
+                                        <div className="text-center border-l border-r border-slate-200 dark:border-slate-700 px-4">
+                                            <div className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold">Bonus Matches</div>
+                                            <div className="font-semibold text-purple-600 dark:text-purple-400">${(bankStats[activeKid]?.bonusSaved || 0).toFixed(2)}</div>
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold">Total Withdrawn</div>
+                                            <div className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold">Withdrawn</div>
                                             <div className="font-semibold text-red-500 dark:text-red-400">${(bankStats[activeKid]?.totalWithdrawn || 0).toFixed(2)}</div>
                                         </div>
                                     </div>
@@ -746,8 +756,8 @@
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className={`font-bold ${item.type === 'deposit' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-                                                            {item.type === 'deposit' ? '+' : '-'}${item.amount.toFixed(2)}
+                                                        <div className={`font-bold ${item.type === 'deposit' || item.type === 'weekly' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                            {item.type === 'withdraw' ? '-' : '+'}${item.amount.toFixed(2)}
                                                         </div>
                                                         {item.dbRecord && (
                                                             <button onClick={() => deleteSavingsTx(item.id)} className="text-slate-300 hover:text-red-400 ml-2">
@@ -782,14 +792,14 @@
                                             // RENDER PAYOUT
                                             if (item.type === 'payout') {
                                                 return (
-                                                    <div key={item.id} className="p-4 bg-green-50/50 dark:bg-green-900/10 flex items-center justify-between">
+                                                    <div key={item.id} className="p-4 bg-blue-50/50 dark:bg-blue-900/10 flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
+                                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                                                 <Icon name="wallet" className="w-4 h-4" />
                                                             </div>
                                                             <div>
-                                                                <div className="font-bold text-green-800 dark:text-green-300 text-sm">Weekly Payout: {item.kid}</div>
-                                                                <div className="text-xs text-green-600 dark:text-green-500 font-medium">
+                                                                <div className="font-bold text-blue-800 dark:text-blue-300 text-sm">Weekly Payout: {item.kid}</div>
+                                                                <div className="text-xs text-blue-600 dark:text-blue-500 font-medium">
                                                                     Cash: ${item.amountCash?.toFixed(2) || '0.00'} | Savings: ${item.amountSavings?.toFixed(2) || '0.00'}
                                                                 </div>
                                                                 {item.bonusAmount > 0 && (
@@ -801,7 +811,7 @@
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <div className="font-black text-green-600 dark:text-green-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
+                                                            <div className="font-black text-blue-600 dark:text-blue-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
                                                         </div>
                                                     </div>
                                                 );
@@ -818,7 +828,7 @@
                                                             </div>
                                                             <div>
                                                                 <div className={`font-bold text-sm ${isDep ? 'text-purple-800 dark:text-purple-300' : 'text-red-800 dark:text-red-300'}`}>
-                                                                    Bank {isDep ? 'Deposit' : 'Withdrawal'}: {item.kid}
+                                                                    {isDep ? 'Bonus Match Added' : 'Savings Withdrawal'}: {item.kid}
                                                                 </div>
                                                                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                                                                     {item.note}
@@ -939,7 +949,7 @@
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="..."
+                                            placeholder={savingsModalType === 'deposit' ? 'Monthly 10% Match' : '...'}
                                             value={savingsNote}
                                             onChange={e => setSavingsNote(e.target.value)}
                                             className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -980,7 +990,7 @@
                                     </div>
                                     <div className="flex justify-between text-slate-700 dark:text-slate-200">
                                         <span>Fixed Savings:</span>
-                                        <span className="font-semibold text-purple-600 dark:text-purple-400">+${payoutConfirmData.stats.savings.toFixed(2)} to Bank</span>
+                                        <span className="font-semibold text-blue-600 dark:text-blue-400">+${payoutConfirmData.stats.savings.toFixed(2)} to Bank</span>
                                     </div>
                                     
                                     {payoutConfirmData.stats.bonus > 0 && (
