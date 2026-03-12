@@ -296,14 +296,20 @@
 
             // --- Handlers: Activity ---
             const handleAddActivity = async (responseType) => {
-                if (!newAskTask.trim()) return; 
+                // VERIFICATION FIX: Make sure the user typed in a task!
+                if (!newAskTask.trim()) {
+                    alert("Please enter what task or chore was completed.");
+                    return;
+                }
+                
                 const currentUid = user?.uid || 'public-user';
                 
-                let amount = 0;
+                // VERIFICATION FIX: Make sure a valid dollar amount was added if it's a paid chore
+                let amountToSave = 0;
                 if (responseType === 'chore') {
-                    amount = parseFloat(newChoreAmount) || 0;
-                    if (amount <= 0) {
-                        alert("Please enter a valid amount for the chore.");
+                    amountToSave = parseFloat(newChoreAmount);
+                    if (isNaN(amountToSave) || amountToSave <= 0) {
+                        alert("Please enter a valid dollar amount for this chore (e.g. 5.00).");
                         return;
                     }
                 }
@@ -313,7 +319,7 @@
                         userId: currentUid,
                         task: newAskTask,
                         response: responseType, // 'yes', 'no', or 'chore'
-                        amount: amount,         // Only used if 'chore'
+                        amount: amountToSave,   // FIX: Actually saves the money to Firebase now!
                         isPaid: false, 
                         kid: activeKid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -329,12 +335,14 @@
                     if (responseType === 'yes' || responseType === 'chore') playSuccessSound(); 
                     else playFailSound();
 
+                    // Clear everything out after success
                     setNewAskTask('');
                     setNewChoreAmount('');
                     setSaveAskAsTemplate(false);
                     setIsAddAskOpen(false);
                 } catch (error) {
                     if (error.code === 'permission-denied') setPermissionError(true);
+                    else alert("Error saving: " + error.message);
                 }
             };
 
@@ -431,13 +439,12 @@
                     const countNo = kAsks.filter(a => a.response === 'no').length;
                     const countChores = kAsks.filter(a => a.response === 'chore').length;
                     
-                    const fixedSavings = k.age / 2; // Fixed exactly to half their age
+                    const fixedSavings = k.age / 2; 
                     
                     let calculatedCash = 0;
                     let actualDeductions = 0;
                     let choreEarnings = 0;
                     
-                    // Sort chronologically from oldest to newest to calculate running total
                     const chronologicalAsks = [...kAsks].sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
                     
                     chronologicalAsks.forEach(item => {
@@ -449,7 +456,7 @@
                                 actualDeductions += k.penalty;
                             } else {
                                 actualDeductions += calculatedCash; 
-                                calculatedCash = 0; // Floor at zero
+                                calculatedCash = 0; 
                             }
                         } else if (item.response === 'chore') {
                             const amt = item.amount || 0;
@@ -813,6 +820,11 @@
                                                         <div className={`font-bold ${item.type === 'deposit' || item.type === 'weekly' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                                                             {item.type === 'withdraw' ? '-' : '+'}${item.amount.toFixed(2)}
                                                         </div>
+                                                        {item.dbRecord && (
+                                                            <button onClick={() => deleteSavingsTx(item.id)} className="text-slate-300 hover:text-red-400 ml-2">
+                                                                <Icon name="trash" className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )
@@ -841,21 +853,21 @@
                                             // RENDER PAYOUT
                                             if (item.type === 'payout') {
                                                 return (
-                                                    <div key={item.id} className="p-4 bg-green-50/50 dark:bg-green-900/10 flex items-center justify-between">
+                                                    <div key={item.id} className="p-4 bg-blue-50/50 dark:bg-blue-900/10 flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
+                                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                                                 <Icon name="wallet" className="w-4 h-4" />
                                                             </div>
                                                             <div>
-                                                                <div className="font-bold text-green-800 dark:text-green-300 text-sm">Weekly Payout: {item.kid}</div>
-                                                                <div className="text-xs text-green-600 dark:text-green-500 font-medium">
+                                                                <div className="font-bold text-blue-800 dark:text-blue-300 text-sm">Weekly Payout: {item.kid}</div>
+                                                                <div className="text-xs text-blue-600 dark:text-blue-500 font-medium">
                                                                     Cash: ${item.amountCash?.toFixed(2) || '0.00'} | Savings: ${item.amountSavings?.toFixed(2) || '0.00'}
                                                                 </div>
                                                                 <div className="text-[10px] text-slate-400 mt-0.5">{dateStr}</div>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <div className="font-black text-green-600 dark:text-green-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
+                                                            <div className="font-black text-blue-600 dark:text-blue-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
                                                         </div>
                                                     </div>
                                                 );
@@ -1171,13 +1183,13 @@
                                             <p className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">How did they respond?</p>
                                             <div className="flex gap-3">
                                                 <button 
-                                                    onClick={() => handleAddAsk('no')} 
+                                                    onClick={() => handleAddActivity('no')} 
                                                     className="flex-1 py-4 font-black text-red-700 bg-red-100 border-2 border-red-200 rounded-xl hover:bg-red-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
                                                 >
                                                     <Icon name="thumbsDown" className="w-6 h-6" /> NO (-$0.50)
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleAddAsk('yes')} 
+                                                    onClick={() => handleAddActivity('yes')} 
                                                     className="flex-1 py-4 font-black text-green-700 bg-green-100 border-2 border-green-200 rounded-xl hover:bg-green-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
                                                 >
                                                     <Icon name="thumbsUp" className="w-6 h-6" /> YES (+$1.00)
@@ -1186,7 +1198,7 @@
                                         </>
                                     ) : (
                                         <button 
-                                            onClick={() => handleAddAsk('chore')} 
+                                            onClick={() => handleAddActivity('chore')} 
                                             className="w-full py-4 font-black text-blue-700 bg-blue-100 border-2 border-blue-200 rounded-xl hover:bg-blue-200 active:scale-95 transition-all flex items-center justify-center gap-2"
                                         >
                                             <Icon name="checkCircle" className="w-6 h-6" /> LOG PAID CHORE
