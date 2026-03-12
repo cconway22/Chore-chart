@@ -162,8 +162,8 @@
                 name: 'Finley', 
                 age: 12,          
                 allowance: 12.00, 
-                penalty: 0.50,    // Deducted per 'No'
-                bonus: 1.00,      // Earned per 'Yes'
+                penalty: 0.50,    
+                bonus: 1.00,      
                 color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200', 
                 border: 'border-teal-200 dark:border-teal-700', 
                 btn: 'bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-500' 
@@ -193,7 +193,7 @@
         function App() {
             const [user, setUser] = React.useState(null);
             const [activeKid, setActiveKid] = React.useState(KIDS[0].name);
-            const [activeTab, setActiveTab] = React.useState('activity'); // Changed to activity
+            const [activeTab, setActiveTab] = React.useState('activity'); 
             const [permissionError, setPermissionError] = React.useState(false);
             const [darkMode, setDarkMode] = React.useState(false);
             
@@ -296,7 +296,6 @@
 
             // --- Handlers: Activity ---
             const handleAddActivity = async (responseType) => {
-                // VERIFICATION FIX: Make sure the user typed in a task!
                 if (!newAskTask.trim()) {
                     alert("Please enter what task or chore was completed.");
                     return;
@@ -304,7 +303,6 @@
                 
                 const currentUid = user?.uid || 'public-user';
                 
-                // VERIFICATION FIX: Make sure a valid dollar amount was added if it's a paid chore
                 let amountToSave = 0;
                 if (responseType === 'chore') {
                     amountToSave = parseFloat(newChoreAmount);
@@ -318,8 +316,8 @@
                     await db.collection('asks').add({
                         userId: currentUid,
                         task: newAskTask,
-                        response: responseType, // 'yes', 'no', or 'chore'
-                        amount: amountToSave,   // FIX: Actually saves the money to Firebase now!
+                        response: responseType, 
+                        amount: amountToSave,   
                         isPaid: false, 
                         kid: activeKid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -335,7 +333,6 @@
                     if (responseType === 'yes' || responseType === 'chore') playSuccessSound(); 
                     else playFailSound();
 
-                    // Clear everything out after success
                     setNewAskTask('');
                     setNewChoreAmount('');
                     setSaveAskAsTemplate(false);
@@ -429,7 +426,7 @@
                 return stats;
             }, [payouts, savingsTx]);
 
-            // Weekly Earnings Calc (Chronological zero-floor logic)
+            // Weekly Earnings Calc
             const currentEarnings = React.useMemo(() => {
                 const totals = {};
                 KIDS.forEach(k => {
@@ -575,21 +572,23 @@
                                 <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">Earning Engine</h1>
                             </div>
                             
-                            <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
-                                {KIDS.map(kid => (
-                                    <button
-                                        key={kid.name}
-                                        onClick={() => setActiveKid(kid.name)}
-                                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                                            activeKid === kid.name 
-                                                ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-md ring-1 ring-black/5 scale-100' 
-                                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 scale-95'
-                                        }`}
-                                    >
-                                        {kid.name}
-                                    </button>
-                                ))}
-                            </div>
+                            {(activeTab === 'activity' || activeTab === 'bank' || activeTab === 'history') && (
+                                <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
+                                    {KIDS.map(kid => (
+                                        <button
+                                            key={kid.name}
+                                            onClick={() => setActiveKid(kid.name)}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                                                activeKid === kid.name 
+                                                    ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-md ring-1 ring-black/5 scale-100' 
+                                                    : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 scale-95'
+                                            }`}
+                                        >
+                                            {kid.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1212,7 +1211,7 @@
                     {/* Tab Bar */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-2 sm:px-6 py-3 pb-safe z-40 transition-colors duration-300">
                         <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
-                            <button onClick={() => setActiveTab('asks')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'asks' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                            <button onClick={() => setActiveTab('activity')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'activity' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
                                 <Icon name="message" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Activity</span>
                             </button>
                             <button onClick={() => setActiveTab('money')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'money' ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
