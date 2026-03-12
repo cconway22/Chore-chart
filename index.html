@@ -149,7 +149,8 @@
                 message: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>,
                 bank: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="3" y1="22" x2="21" y2="22"></line><line x1="6" y1="18" x2="6" y2="11"></line><line x1="10" y1="18" x2="10" y2="11"></line><line x1="14" y1="18" x2="14" y2="11"></line><line x1="18" y1="18" x2="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></svg>,
                 arrowUp: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>,
-                arrowDown: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                arrowDown: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>,
+                checkCircle: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             };
             return icons[name] || null;
         };
@@ -159,7 +160,8 @@
         const KIDS = [
             { 
                 name: 'Finley', 
-                age: 12,          // Updated from CSV
+                age: 12,          
+                allowance: 12.00, 
                 penalty: 0.50,    // Deducted per 'No'
                 bonus: 1.00,      // Earned per 'Yes'
                 color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200', 
@@ -169,6 +171,7 @@
             { 
                 name: 'James', 
                 age: 9,           
+                allowance: 9.00, 
                 penalty: 0.50,
                 bonus: 1.00,
                 color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200', 
@@ -178,6 +181,7 @@
             { 
                 name: 'Liam', 
                 age: 8,           
+                allowance: 8.00, 
                 penalty: 0.50,
                 bonus: 1.00,
                 color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200', 
@@ -189,7 +193,7 @@
         function App() {
             const [user, setUser] = React.useState(null);
             const [activeKid, setActiveKid] = React.useState(KIDS[0].name);
-            const [activeTab, setActiveTab] = React.useState('asks');
+            const [activeTab, setActiveTab] = React.useState('activity'); // Changed to activity
             const [permissionError, setPermissionError] = React.useState(false);
             const [darkMode, setDarkMode] = React.useState(false);
             
@@ -201,7 +205,9 @@
             
             // UI State
             const [isAddAskOpen, setIsAddAskOpen] = React.useState(false);
+            const [activityMode, setActivityMode] = React.useState('ask'); // 'ask' or 'chore'
             const [newAskTask, setNewAskTask] = React.useState('');
+            const [newChoreAmount, setNewChoreAmount] = React.useState('');
             const [saveAskAsTemplate, setSaveAskAsTemplate] = React.useState(false);
             
             const [payoutConfirmData, setPayoutConfirmData] = React.useState(null);
@@ -288,27 +294,43 @@
                 };
             }, [user]);
 
-            // --- Handlers: Asks ---
-            const handleAddAsk = async (response) => {
+            // --- Handlers: Activity ---
+            const handleAddActivity = async (responseType) => {
                 if (!newAskTask.trim()) return; 
                 const currentUid = user?.uid || 'public-user';
+                
+                let amount = 0;
+                if (responseType === 'chore') {
+                    amount = parseFloat(newChoreAmount) || 0;
+                    if (amount <= 0) {
+                        alert("Please enter a valid amount for the chore.");
+                        return;
+                    }
+                }
+
                 try {
                     await db.collection('asks').add({
                         userId: currentUid,
                         task: newAskTask,
-                        response: response,
+                        response: responseType, // 'yes', 'no', or 'chore'
+                        amount: amount,         // Only used if 'chore'
                         isPaid: false, 
                         kid: activeKid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+
                     if (saveAskAsTemplate) {
                         const exists = askTemplates.some(t => t.task.toLowerCase() === newAskTask.toLowerCase());
                         if (!exists) {
                             await db.collection('ask_templates').add({ userId: currentUid, task: newAskTask });
                         }
                     }
-                    if (response === 'yes') playSuccessSound(); else playFailSound();
+
+                    if (responseType === 'yes' || responseType === 'chore') playSuccessSound(); 
+                    else playFailSound();
+
                     setNewAskTask('');
+                    setNewChoreAmount('');
                     setSaveAskAsTemplate(false);
                     setIsAddAskOpen(false);
                 } catch (error) {
@@ -399,7 +421,7 @@
                 return stats;
             }, [payouts, savingsTx]);
 
-            // Weekly Earnings Calc
+            // Weekly Earnings Calc (Chronological zero-floor logic)
             const currentEarnings = React.useMemo(() => {
                 const totals = {};
                 KIDS.forEach(k => {
@@ -407,42 +429,48 @@
                     
                     const countYes = kAsks.filter(a => a.response === 'yes').length;
                     const countNo = kAsks.filter(a => a.response === 'no').length;
+                    const countChores = kAsks.filter(a => a.response === 'chore').length;
                     
-                    const fixedSavings = k.age / 2; // Savings is completely locked/fixed to half their age
+                    const fixedSavings = k.age / 2; // Fixed exactly to half their age
                     
-                    // Chronological calculation to prevent spending cash from ever going negative
                     let calculatedCash = 0;
                     let actualDeductions = 0;
+                    let choreEarnings = 0;
                     
-                    // Sort oldest to newest to step through the timeline
+                    // Sort chronologically from oldest to newest to calculate running total
                     const chronologicalAsks = [...kAsks].sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
                     
-                    chronologicalAsks.forEach(ask => {
-                        if (ask.response === 'yes') {
+                    chronologicalAsks.forEach(item => {
+                        if (item.response === 'yes') {
                             calculatedCash += k.bonus;
-                        } else if (ask.response === 'no') {
-                            // If they have money to lose, deduct it
+                        } else if (item.response === 'no') {
                             if (calculatedCash >= k.penalty) {
                                 calculatedCash -= k.penalty;
                                 actualDeductions += k.penalty;
                             } else {
-                                // If they have less than the penalty, they only lose what they have (floor at 0)
                                 actualDeductions += calculatedCash; 
-                                calculatedCash = 0;
+                                calculatedCash = 0; // Floor at zero
                             }
+                        } else if (item.response === 'chore') {
+                            const amt = item.amount || 0;
+                            calculatedCash += amt;
+                            choreEarnings += amt;
                         }
                     });
                     
                     const totalEarned = calculatedCash + fixedSavings;
 
                     totals[k.name] = {
-                        savings: fixedSavings,
-                        cash: calculatedCash,
-                        earned: totalEarned,
+                        base: k.allowance,
+                        actualDeductions: actualDeductions,
+                        bonus: countYes * k.bonus,
+                        choreEarnings: choreEarnings,
                         yesCount: countYes,
                         noCount: countNo,
-                        potentialBonus: countYes * k.bonus,
-                        actualDeductions: actualDeductions
+                        choreCount: countChores,
+                        earned: totalEarned,
+                        cash: calculatedCash,
+                        savings: fixedSavings
                     };
                 });
                 return totals;
@@ -484,7 +512,9 @@
                     asksCount: unpaidAsks.length,
                     noCount: stats.noCount,
                     yesCount: stats.yesCount,
-                    bonusAmount: stats.potentialBonus,
+                    choreCount: stats.choreCount,
+                    bonusAmount: stats.bonus,
+                    choreAmount: stats.choreEarnings,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -538,40 +568,38 @@
                                 <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">Earning Engine</h1>
                             </div>
                             
-                            {(activeTab === 'asks' || activeTab === 'bank' || activeTab === 'history') && (
-                                <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
-                                    {KIDS.map(kid => (
-                                        <button
-                                            key={kid.name}
-                                            onClick={() => setActiveKid(kid.name)}
-                                            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                                                activeKid === kid.name 
-                                                    ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-md ring-1 ring-black/5 scale-100' 
-                                                    : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 scale-95'
-                                            }`}
-                                        >
-                                            {kid.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="flex justify-between gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl transition-colors duration-300">
+                                {KIDS.map(kid => (
+                                    <button
+                                        key={kid.name}
+                                        onClick={() => setActiveKid(kid.name)}
+                                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                                            activeKid === kid.name 
+                                                ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-md ring-1 ring-black/5 scale-100' 
+                                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 scale-95'
+                                        }`}
+                                    >
+                                        {kid.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
                     <div className="max-w-md mx-auto px-4 pt-6">
                         
-                        {/* ASKS TAB */}
-                        {activeTab === 'asks' && (
+                        {/* ACTIVITY TAB */}
+                        {activeTab === 'activity' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200">{activeKid}'s Responses</h2>
+                                    <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200">{activeKid}'s Activity</h2>
                                 </div>
 
                                 {filteredAsks.length === 0 && (
                                     <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 transition-colors duration-300">
                                         <div className="text-4xl mb-2">💬</div>
-                                        <p className="text-slate-500 dark:text-slate-400 font-medium">No asks logged this week.</p>
-                                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Tap below to log a response.</p>
+                                        <p className="text-slate-500 dark:text-slate-400 font-medium">No activity logged this week.</p>
+                                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Tap below to log a behavior or chore.</p>
                                     </div>
                                 )}
 
@@ -582,13 +610,19 @@
                                             className={`flex items-center p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border transition-all duration-300 ${
                                                 ask.response === 'yes' 
                                                     ? 'border-green-100 dark:border-green-900/50 border-l-4 border-l-green-500' 
-                                                    : 'border-red-100 dark:border-red-900/50 border-l-4 border-l-red-500'
+                                                : ask.response === 'chore'
+                                                    ? 'border-blue-100 dark:border-blue-900/50 border-l-4 border-l-blue-500'
+                                                : 'border-red-100 dark:border-red-900/50 border-l-4 border-l-red-500'
                                             }`}
                                         >
                                             <div className="flex-shrink-0 mr-4">
                                                 {ask.response === 'yes' ? (
                                                     <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
                                                         <Icon name="thumbsUp" className="w-5 h-5" />
+                                                    </div>
+                                                ) : ask.response === 'chore' ? (
+                                                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                        <Icon name="checkCircle" className="w-5 h-5" />
                                                     </div>
                                                 ) : (
                                                     <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
@@ -601,8 +635,11 @@
                                                 <h3 className="font-semibold text-lg text-slate-700 dark:text-slate-200 leading-tight">
                                                     {ask.task}
                                                 </h3>
-                                                <span className={`text-xs font-bold uppercase tracking-wider ${ask.response === 'yes' ? 'text-green-500' : 'text-red-500'}`}>
-                                                    Said {ask.response}
+                                                <span className={`text-xs font-bold uppercase tracking-wider ${
+                                                    ask.response === 'yes' ? 'text-green-500' : 
+                                                    ask.response === 'chore' ? 'text-blue-500' : 'text-red-500'
+                                                }`}>
+                                                    {ask.response === 'chore' ? `Earned $${ask.amount?.toFixed(2)}` : `Said ${ask.response}`}
                                                 </span>
                                             </div>
 
@@ -663,12 +700,21 @@
                                                         <span>Weekly Savings (Age / 2):</span>
                                                         <span className="font-semibold">${stats.savings.toFixed(2)}</span>
                                                     </div>
-                                                    {stats.yesCount > 0 && (
-                                                        <div className="flex justify-between text-green-500">
-                                                            <span>Task Earnings ({stats.yesCount} "Yes"):</span>
-                                                            <span className="font-semibold">+${stats.potentialBonus.toFixed(2)}</span>
+                                                    
+                                                    {stats.choreCount > 0 && (
+                                                        <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                                                            <span>Paid Chores ({stats.choreCount}):</span>
+                                                            <span className="font-semibold">+${stats.choreEarnings.toFixed(2)}</span>
                                                         </div>
                                                     )}
+                                                    
+                                                    {stats.yesCount > 0 && (
+                                                        <div className="flex justify-between text-green-600 dark:text-green-500">
+                                                            <span>"Yes" Bonus ({stats.yesCount}):</span>
+                                                            <span className="font-semibold">+${stats.bonus.toFixed(2)}</span>
+                                                        </div>
+                                                    )}
+
                                                     {stats.noCount > 0 && (
                                                         <div className="flex justify-between text-red-500">
                                                             <span>Deductions ({stats.noCount} "No"):</span>
@@ -767,11 +813,6 @@
                                                         <div className={`font-bold ${item.type === 'deposit' || item.type === 'weekly' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                                                             {item.type === 'withdraw' ? '-' : '+'}${item.amount.toFixed(2)}
                                                         </div>
-                                                        {item.dbRecord && (
-                                                            <button onClick={() => deleteSavingsTx(item.id)} className="text-slate-300 hover:text-red-400 ml-2">
-                                                                <Icon name="trash" className="w-4 h-4" />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
                                             )
@@ -800,26 +841,21 @@
                                             // RENDER PAYOUT
                                             if (item.type === 'payout') {
                                                 return (
-                                                    <div key={item.id} className="p-4 bg-blue-50/50 dark:bg-blue-900/10 flex items-center justify-between">
+                                                    <div key={item.id} className="p-4 bg-green-50/50 dark:bg-green-900/10 flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
                                                                 <Icon name="wallet" className="w-4 h-4" />
                                                             </div>
                                                             <div>
-                                                                <div className="font-bold text-blue-800 dark:text-blue-300 text-sm">Weekly Payout: {item.kid}</div>
-                                                                <div className="text-xs text-blue-600 dark:text-blue-500 font-medium">
+                                                                <div className="font-bold text-green-800 dark:text-green-300 text-sm">Weekly Payout: {item.kid}</div>
+                                                                <div className="text-xs text-green-600 dark:text-green-500 font-medium">
                                                                     Cash: ${item.amountCash?.toFixed(2) || '0.00'} | Savings: ${item.amountSavings?.toFixed(2) || '0.00'}
                                                                 </div>
-                                                                {item.bonusAmount > 0 && (
-                                                                    <div className="text-[10px] text-green-600 dark:text-green-400 font-bold mt-0.5">
-                                                                        + ${item.bonusAmount.toFixed(2)} 'Yes' Bonus
-                                                                    </div>
-                                                                )}
                                                                 <div className="text-[10px] text-slate-400 mt-0.5">{dateStr}</div>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <div className="font-black text-blue-600 dark:text-blue-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
+                                                            <div className="font-black text-green-600 dark:text-green-400 text-lg">${item.amountEarned?.toFixed(2) || '0.00'}</div>
                                                         </div>
                                                     </div>
                                                 );
@@ -872,6 +908,10 @@
                                                             {item.response === 'yes' ? (
                                                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
                                                                     <Icon name="thumbsUp" className="w-3 h-3" /> YES
+                                                                </span>
+                                                            ) : item.response === 'chore' ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                                                                    + ${item.amount?.toFixed(2)}
                                                                 </span>
                                                             ) : (
                                                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-1 rounded-full">
@@ -1001,10 +1041,20 @@
                                         <span className="font-semibold text-blue-600 dark:text-blue-400">+${payoutConfirmData.stats.savings.toFixed(2)} to Bank</span>
                                     </div>
                                     
-                                    {payoutConfirmData.stats.bonus > 0 && (
-                                        <div className="flex justify-between text-green-500 pt-2 border-t border-slate-200 dark:border-slate-600 mt-2">
-                                            <span>🎉 'Yes' Bonus (To Cash):</span>
-                                            <span className="font-semibold">+${payoutConfirmData.stats.bonus.toFixed(2)}</span>
+                                    {(payoutConfirmData.stats.bonus > 0 || payoutConfirmData.stats.choreEarnings > 0) && (
+                                        <div className="flex flex-col gap-1 pt-2 border-t border-slate-200 dark:border-slate-600 mt-2">
+                                            {payoutConfirmData.stats.bonus > 0 && (
+                                                <div className="flex justify-between text-green-500">
+                                                    <span>🎉 'Yes' Bonus (To Cash):</span>
+                                                    <span className="font-semibold">+${payoutConfirmData.stats.bonus.toFixed(2)}</span>
+                                                </div>
+                                            )}
+                                            {payoutConfirmData.stats.choreEarnings > 0 && (
+                                                <div className="flex justify-between text-blue-500">
+                                                    <span>🧹 Paid Chores (To Cash):</span>
+                                                    <span className="font-semibold">+${payoutConfirmData.stats.choreEarnings.toFixed(2)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1019,16 +1069,33 @@
                         </div>
                     )}
 
-                    {/* Add Ask Modal */}
+                    {/* Add Activity Modal */}
                     {isAddAskOpen && (
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
                             <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh] transition-colors duration-300 overflow-hidden">
+                                
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
-                                        <Icon name="message" className="w-5 h-5 text-blue-500" /> New Ask for {activeKid}
+                                        <Icon name="plus" className="w-5 h-5 text-blue-500" /> New Activity for {activeKid}
                                     </h3>
                                     <button type="button" onClick={() => setIsAddAskOpen(false)}>
                                         <Icon name="x" className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                                    </button>
+                                </div>
+
+                                {/* Toggle Mode */}
+                                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl mb-4">
+                                    <button 
+                                        onClick={() => setActivityMode('ask')} 
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activityMode === 'ask' ? 'bg-white dark:bg-slate-600 shadow text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
+                                    >
+                                        Behavior (Yes/No)
+                                    </button>
+                                    <button 
+                                        onClick={() => setActivityMode('chore')} 
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activityMode === 'chore' ? 'bg-white dark:bg-slate-600 shadow text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
+                                    >
+                                        Paid Chore
                                     </button>
                                 </div>
 
@@ -1036,7 +1103,7 @@
                                     {askTemplates.length > 0 && (
                                         <div className="mb-6">
                                             <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                                <Icon name="library" className="w-3 h-3" /> Saved Asks
+                                                <Icon name="library" className="w-3 h-3" /> Saved Activity
                                             </div>
                                             <div className="border border-slate-200 dark:border-slate-600 rounded-xl max-h-32 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
                                                 {askTemplates.map(tpl => (
@@ -1055,16 +1122,34 @@
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">What did you ask them to do?</label>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                                {activityMode === 'ask' ? 'What did you ask them to do?' : 'What chore did they complete?'}
+                                            </label>
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                placeholder="e.g. Put shoes away"
+                                                placeholder={activityMode === 'ask' ? "e.g. Put shoes away" : "e.g. Mowed the lawn"}
                                                 value={newAskTask}
                                                 onChange={e => setNewAskTask(e.target.value)}
                                                 className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                             />
                                         </div>
+
+                                        {activityMode === 'chore' && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Chore Value ($)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.25"
+                                                    min="0.25"
+                                                    placeholder="0.00"
+                                                    value={newChoreAmount}
+                                                    onChange={e => setNewChoreAmount(e.target.value)}
+                                                    className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                                />
+                                            </div>
+                                        )}
+
                                         <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
                                             <input 
                                                 type="checkbox"
@@ -1081,21 +1166,32 @@
                                 </div>
 
                                 <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
-                                    <p className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">How did they respond?</p>
-                                    <div className="flex gap-3">
+                                    {activityMode === 'ask' ? (
+                                        <>
+                                            <p className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">How did they respond?</p>
+                                            <div className="flex gap-3">
+                                                <button 
+                                                    onClick={() => handleAddAsk('no')} 
+                                                    className="flex-1 py-4 font-black text-red-700 bg-red-100 border-2 border-red-200 rounded-xl hover:bg-red-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                                >
+                                                    <Icon name="thumbsDown" className="w-6 h-6" /> NO (-$0.50)
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleAddAsk('yes')} 
+                                                    className="flex-1 py-4 font-black text-green-700 bg-green-100 border-2 border-green-200 rounded-xl hover:bg-green-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                                >
+                                                    <Icon name="thumbsUp" className="w-6 h-6" /> YES (+$1.00)
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
                                         <button 
-                                            onClick={() => handleAddAsk('no')} 
-                                            className="flex-1 py-4 font-black text-red-700 bg-red-100 border-2 border-red-200 rounded-xl hover:bg-red-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                                            onClick={() => handleAddAsk('chore')} 
+                                            className="w-full py-4 font-black text-blue-700 bg-blue-100 border-2 border-blue-200 rounded-xl hover:bg-blue-200 active:scale-95 transition-all flex items-center justify-center gap-2"
                                         >
-                                            <Icon name="thumbsDown" className="w-6 h-6" /> NO
+                                            <Icon name="checkCircle" className="w-6 h-6" /> LOG PAID CHORE
                                         </button>
-                                        <button 
-                                            onClick={() => handleAddAsk('yes')} 
-                                            className="flex-1 py-4 font-black text-green-700 bg-green-100 border-2 border-green-200 rounded-xl hover:bg-green-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
-                                        >
-                                            <Icon name="thumbsUp" className="w-6 h-6" /> YES
-                                        </button>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1105,7 +1201,7 @@
                     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-2 sm:px-6 py-3 pb-safe z-40 transition-colors duration-300">
                         <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
                             <button onClick={() => setActiveTab('asks')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'asks' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
-                                <Icon name="message" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Asks</span>
+                                <Icon name="message" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Activity</span>
                             </button>
                             <button onClick={() => setActiveTab('money')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'money' ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
                                 <Icon name="dollar" className="w-5 h-5 sm:w-6 sm:h-6" /> <span className="text-[9px] sm:text-[10px] font-medium">Money</span>
